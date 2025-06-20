@@ -147,7 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Renderiza uma tabela genérica
     const renderTable = (tbody, data, isEditable = true, headers = null) => {
         tbody.innerHTML = '';
-        clientsTableHead.innerHTML = ''; // Limpa o cabeçalho de clientes sempre
+        if (headers) {
+           clientsTableHead.innerHTML = ''; // Limpa o cabeçalho de clientes apenas se for renderizar clientes
+        }
         
         if (headers && headers.length > 0) {
             const headerRow = document.createElement('tr');

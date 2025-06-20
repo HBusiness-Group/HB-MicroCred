@@ -161,6 +161,10 @@
                 </div>
             </div>
         </form>
+         <!-- Link para a área do administrador -->
+        <footer class="text-center mt-8">
+            <a href="admin.html" class="text-xs text-slate-400 hover:text-slate-600">Área do Administrador</a>
+        </footer>
     </div>
 
     <!-- Tela de Sucesso -->
@@ -203,7 +207,6 @@
             </div>
         </div>
     </div>
-
     <script>
         // Selecionando Elementos
         const formContainer = document.getElementById('form-container');
@@ -251,7 +254,6 @@
             loader.classList.toggle('hidden', !isLoading);
             submitButton.disabled = isLoading;
         };
-        
         const formatNameInput = (e) => {
             let value = e.target.value.replace(/[0-9]/g, '');
             e.target.value = value.toUpperCase();
@@ -318,7 +320,7 @@
                     throw new Error('CEP não encontrado');
                 }
                 addressDataFromCep = data;
-                ruaInput.value = data.logradouro.toUpperCase(); // Também coloca a rua em maiúsculo
+                ruaInput.value = data.logradouro.toUpperCase();
                 addressResultDiv.textContent = `${data.bairro} - ${data.localidade}/${data.uf}`;
                 numeroInput.focus();
             } catch (error) {
@@ -328,7 +330,7 @@
         });
         fullNameInput.addEventListener('input', formatNameInput);
         referenceNameInput.addEventListener('input', formatNameInput);
-        complementoInput.addEventListener('input', formatToUppercase); // Novo listener
+        complementoInput.addEventListener('input', formatToUppercase);
         cpfInput.addEventListener('input', formatCpf);
         cpfInput.addEventListener('blur', handleCpfValidation);
         phoneInput.addEventListener('input', formatPhone);

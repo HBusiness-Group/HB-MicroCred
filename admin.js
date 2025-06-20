@@ -1,4 +1,3 @@
-// Aguarda o carregamento completo da página antes de executar o script
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELEÇÃO DE ELEMENTOS DO DOM ---
@@ -10,21 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('password');
     const userProfileName = document.getElementById('user-profile-name');
     const logoutBtn = document.getElementById('logout-btn');
-
-    // Seção de Usuários
     const usersSection = document.getElementById('users-section');
     const usersTableBody = document.getElementById('users-table-body');
     const addUserRowBtn = document.getElementById('add-user-row-btn');
     const saveUsersBtn = document.getElementById('save-users-btn');
-
-    // Seção de Clientes
     const clientsSection = document.getElementById('clients-section');
     const clientsTableHead = document.getElementById('clients-table-head');
     const clientsTableBody = document.getElementById('clients-table-body');
     const addClientRowBtn = document.getElementById('add-client-row-btn');
     const saveClientsBtn = document.getElementById('save-clients-btn');
-    
-    // Modal e Notificações
     const confirmationModal = document.getElementById('confirmation-modal');
     const cancelBtn = document.getElementById('cancel-btn');
     const confirmBtn = document.getElementById('confirm-btn');
@@ -33,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
+    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // F: address (índice 5), J: statusEmprestimo (índice 9)
 
-    // Em uma aplicação real, isso viria de um banco de dados seguro.
     const hardcodedUsers = {
         "2500": { password: "7579", profile: "Administrador" },
         "2501": { password: "0166", profile: "Editor" },
@@ -47,37 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- FUNÇÕES ---
 
-    // Exibe notificações (toast)
     const showToast = (message, isError = false) => {
         toastMessage.textContent = message;
-        toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300'; // Reset classes
-        if (isError) {
-            toast.classList.add('bg-red-600');
-        } else {
-            toast.classList.add('bg-slate-800');
-        }
-        toast.classList.add('opacity-100');
-        setTimeout(() => {
-            toast.classList.remove('opacity-100');
-        }, 3000);
+        toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300';
+        toast.classList.add(isError ? 'bg-red-600' : 'bg-slate-800', 'opacity-100');
+        setTimeout(() => { toast.classList.remove('opacity-100'); }, 3000);
     };
     
-    // Controla o estado de "carregando" dos botões
     const setButtonLoading = (button, isLoading) => {
         const btnText = button.querySelector('.btn-text');
         const loader = button.querySelector('.loader-sm');
-        if (isLoading) {
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            button.disabled = true;
-        } else {
-            btnText.classList.remove('hidden');
-            loader.classList.add('hidden');
-            button.disabled = false;
-        }
+        btnText.classList.toggle('hidden', isLoading);
+        loader.classList.toggle('hidden', !isLoading);
+        button.disabled = isLoading;
     };
     
-    // Função de Login
     const handleLogin = (e) => {
         e.preventDefault();
         const username = usernameInput.value;
@@ -95,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Função de Logout
     const handleLogout = () => {
         currentUser = null;
         mainContent.classList.add('hidden');
@@ -109,34 +85,27 @@ document.addEventListener('DOMContentLoaded', () => {
         clientsTableBody.innerHTML = '';
     };
 
-    // Inicializa o painel com base no perfil do usuário
     const initializeDashboard = async () => {
+        await fetchAndRenderTable('clients');
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
             await fetchAndRenderTable('users');
         } else {
             usersSection.classList.add('hidden'); 
         }
-        await fetchAndRenderTable('clients');
     };
 
-    // Busca e renderiza os dados das tabelas
     const fetchAndRenderTable = async (type) => {
         try {
-            let url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            if (type === 'clients' && currentUser.profile === 'Editor') {
-                url += `&user=${currentUser.username}`;
-            }
-            
+            const url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error('Falha na resposta da rede.');
             const data = await response.json();
 
             if (type === 'users') {
-                renderTable(usersTableBody, data.slice(1), true);
+                renderUsersTable(data);
             } else if (type === 'clients') {
-                clientDataHeaders = data[0] || [];
-                renderTable(clientsTableBody, data.slice(1), true, clientDataHeaders);
+                renderClientsTable(data);
             }
         } catch (error) {
             console.error(`Erro ao buscar dados de ${type}:`, error);
@@ -144,66 +113,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Renderiza uma tabela genérica
-    const renderTable = (tbody, data, isEditable = true, headers = null) => {
-        tbody.innerHTML = '';
-        if (headers) {
-           clientsTableHead.innerHTML = ''; // Limpa o cabeçalho de clientes apenas se for renderizar clientes
-        }
-        
-        if (headers && headers.length > 0) {
-            const headerRow = document.createElement('tr');
-            headers.forEach(headerText => {
-                const th = document.createElement('th');
-                th.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
-                th.textContent = headerText;
-                headerRow.appendChild(th);
-            });
-            const thAction = document.createElement('th');
-            thAction.textContent = "Ações";
-            thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
-            headerRow.appendChild(thAction);
-            clientsTableHead.appendChild(headerRow);
-        }
-
-        data.forEach((rowData) => {
+    const renderUsersTable = (data) => {
+        const headers = data[0];
+        const rows = data.slice(1);
+        usersTableBody.innerHTML = '';
+        rows.forEach(rowData => {
             const tr = document.createElement('tr');
             tr.className = "bg-white even:bg-slate-50";
-            rowData.forEach((cellData) => {
+            rowData.forEach(cellData => {
                 const td = document.createElement('td');
                 td.className = "px-4 py-2 border-t border-slate-200";
                 td.textContent = cellData;
-                if (isEditable) {
+                td.setAttribute('contenteditable', 'true');
+                tr.appendChild(td);
+            });
+            tr.appendChild(createActionsCell(tr, 'users'));
+            usersTableBody.appendChild(tr);
+        });
+    };
+
+    const renderClientsTable = (data) => {
+        clientDataHeaders = data[0] || [];
+        let rows = data.slice(1);
+        
+        // Filtra para Editores no lado do cliente
+        if (currentUser.profile === 'Editor') {
+            const referenceNameIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+            if (referenceNameIndex !== -1) {
+                rows = rows.filter(row => row[referenceNameIndex] === currentUser.username);
+            }
+        }
+
+        clientsTableHead.innerHTML = '';
+        const headerRow = document.createElement('tr');
+        clientDataHeaders.forEach(headerText => {
+            const th = document.createElement('th');
+            th.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
+            th.textContent = headerText;
+            headerRow.appendChild(th);
+        });
+        const thAction = document.createElement('th');
+        thAction.textContent = "Ações";
+        thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
+        headerRow.appendChild(thAction);
+        clientsTableHead.appendChild(headerRow);
+
+        clientsTableBody.innerHTML = '';
+        rows.forEach(rowData => {
+            const tr = document.createElement('tr');
+            tr.className = "bg-white even:bg-slate-50";
+            rowData.forEach((cellData, cellIndex) => {
+                const td = document.createElement('td');
+                td.className = "px-4 py-2 border-t border-slate-200";
+                td.textContent = cellData;
+                if (EDITABLE_CLIENT_COLUMNS.includes(cellIndex)) {
                     td.setAttribute('contenteditable', 'true');
                 }
                 tr.appendChild(td);
             });
-            tr.appendChild(createActionsCell(tr));
-            tbody.appendChild(tr);
+            tr.appendChild(createActionsCell(tr, 'clients'));
+            clientsTableBody.appendChild(tr);
         });
     };
     
-    // Cria a célula de ações (excluir)
-    const createActionsCell = (row) => {
+    const createActionsCell = (row, type) => {
         const td = document.createElement('td');
         td.className = "px-4 py-2 border-t border-slate-200";
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Excluir';
-        deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
-        deleteBtn.onclick = () => {
-            row.remove();
-            showToast("Linha removida. Salve para confirmar.");
-        };
-        td.appendChild(deleteBtn);
+        if (currentUser.profile === 'Administrador' || (type === 'clients' && currentUser.profile === 'Editor')) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
+            deleteBtn.onclick = () => {
+                row.remove();
+                showToast("Linha removida. Salve para confirmar.");
+            };
+            td.appendChild(deleteBtn);
+        }
         return td;
     };
     
-    // Adiciona uma nova linha em branco na tabela
     const addRow = (tbody, colCount) => {
-        if (colCount === 0) {
-            showToast("Não é possível adicionar linha sem cabeçalhos carregados.", true);
-            return;
-        }
+        if (colCount === 0) return;
         const tr = document.createElement('tr');
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
@@ -216,15 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
     };
     
-    // Lê os dados da tabela HTML e converte para um array 2D
-    const getTableData = (tbody, headers = []) => {
-        const data = [];
-        if (headers.length > 0) {
-            data.push(headers);
-        }
+    const getTableData = (tbody, headers) => {
+        const data = [headers];
         tbody.querySelectorAll('tr').forEach(tr => {
             const rowData = [];
-            tr.querySelectorAll('td[contenteditable="true"]').forEach(td => {
+            tr.querySelectorAll('td[contenteditable]').forEach(td => {
                 rowData.push(td.textContent.trim());
             });
             if (rowData.length > 0) {
@@ -233,20 +219,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return data;
     };
+    
+    const getClientTableDataForSave = () => {
+        const data = [clientDataHeaders];
+        clientsTableBody.querySelectorAll('tr').forEach(tr => {
+            const rowData = [];
+            tr.querySelectorAll('td').forEach(td => {
+                 // Adiciona o conteúdo da célula, ignorando a última (célula de ações)
+                if(!td.querySelector('button')) {
+                    rowData.push(td.textContent.trim());
+                }
+            });
+            if(rowData.length > 0) data.push(rowData);
+        });
+        return data;
+    };
 
-    // Salva as alterações (usuários ou clientes)
+
     const saveChanges = async (type) => {
         const button = type === 'users' ? saveUsersBtn : saveClientsBtn;
         setButtonLoading(button, true);
-
-        const tableBody = type === 'users' ? usersTableBody : clientsTableBody;
-        const headers = type === 'users' ? ["usuario", "senha", "perfil"] : clientDataHeaders;
-        const tableData = getTableData(tableBody, headers);
         
+        let tableData;
+        if (type === 'users') {
+            tableData = getTableData(usersTableBody, ["usuario", "senha", "perfil"]);
+        } else {
+            tableData = getClientTableDataForSave();
+        }
+
         const payload = {
             action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
             user: currentUser.username,
-            profile: currentUser.profile, 
+            profile: currentUser.profile,
             data: tableData
         };
         
@@ -256,44 +260,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' },
             });
-
-            if (!response.ok) {
-                 const errorText = await response.text();
-                 throw new Error(`Erro do servidor: ${response.status} ${errorText}`);
-            }
             
             const result = await response.json();
             if (result.result !== 'success') {
-                throw new Error(result.message || 'Ocorreu um erro desconhecido no servidor.');
+                throw new Error(result.message || 'Erro desconhecido no servidor.');
             }
-            
             showToast('Alterações salvas com sucesso!');
-            await fetchAndRenderTable(type); // Espera o recarregamento
         } catch (error) {
             console.error(`Erro ao salvar ${type}:`, error);
             showToast(`Falha ao salvar. ${error.message}`, true);
         } finally {
             setButtonLoading(button, false);
+            await fetchAndRenderTable(type);
         }
     };
     
     // --- EVENT LISTENERS ---
     loginForm.addEventListener('submit', handleLogin);
     logoutBtn.addEventListener('click', handleLogout);
-
     addUserRowBtn.addEventListener('click', () => addRow(usersTableBody, 3));
     addClientRowBtn.addEventListener('click', () => addRow(clientsTableBody, clientDataHeaders.length));
-    
     saveUsersBtn.addEventListener('click', () => saveChanges('users'));
-    
     saveClientsBtn.addEventListener('click', () => {
-        if (currentUser.profile === 'Editor') {
-            confirmationModal.classList.remove('hidden');
-        } else {
-            saveChanges('clients');
-        }
+        confirmationModal.classList.remove('hidden');
     });
-    
     cancelBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
     confirmBtn.addEventListener('click', () => {
         confirmationModal.classList.add('hidden');

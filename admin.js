@@ -48,8 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FUNÇÕES ---
 
     // Exibe notificações (toast)
-    const showToast = (message) => {
+    const showToast = (message, isError = false) => {
         toastMessage.textContent = message;
+        toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300'; // Reset classes
+        if (isError) {
+            toast.classList.add('bg-red-600');
+        } else {
+            toast.classList.add('bg-slate-800');
+        }
         toast.classList.add('opacity-100');
         setTimeout(() => {
             toast.classList.remove('opacity-100');
@@ -97,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         usernameInput.value = '';
         passwordInput.value = '';
         loginError.classList.add('hidden');
-        // Limpa as tabelas para a próxima sessão
+        usersSection.classList.add('hidden');
         usersTableBody.innerHTML = '';
         clientsTableHead.innerHTML = '';
         clientsTableBody.innerHTML = '';
@@ -109,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             usersSection.classList.remove('hidden');
             await fetchAndRenderTable('users');
         } else {
-            usersSection.classList.add('hidden'); // Garante que a seção de usuários está escondida para editores
+            usersSection.classList.add('hidden'); 
         }
         await fetchAndRenderTable('clients');
     };
@@ -118,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchAndRenderTable = async (type) => {
         try {
             let url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            // Se buscar clientes e o usuário for Editor, adiciona o código de usuário para filtrar no backend
             if (type === 'clients' && currentUser.profile === 'Editor') {
                 url += `&user=${currentUser.username}`;
             }
@@ -135,15 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error(`Erro ao buscar dados de ${type}:`, error);
-            showToast(`Falha ao carregar dados de ${type}.`);
+            showToast(`Falha ao carregar dados de ${type}.`, true);
         }
     };
 
     // Renderiza uma tabela genérica
     const renderTable = (tbody, data, isEditable = true, headers = null) => {
-        tbody.innerHTML = ''; // Limpa a tabela
+        tbody.innerHTML = '';
+        clientsTableHead.innerHTML = ''; // Limpa o cabeçalho de clientes sempre
         
-        if (headers && clientsTableHead.innerHTML === '') {
+        if (headers && headers.length > 0) {
             const headerRow = document.createElement('tr');
             headers.forEach(headerText => {
                 const th = document.createElement('th');
@@ -192,6 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Adiciona uma nova linha em branco na tabela
     const addRow = (tbody, colCount) => {
+        if (colCount === 0) {
+            showToast("Não é possível adicionar linha sem cabeçalhos carregados.", true);
+            return;
+        }
         const tr = document.createElement('tr');
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
@@ -205,10 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // Lê os dados da tabela HTML e converte para um array 2D
-    const getTableData = (tbody, hasHeader = false) => {
+    const getTableData = (tbody, headers = []) => {
         const data = [];
-        if (hasHeader && clientDataHeaders.length > 0) {
-             data.push(clientDataHeaders);
+        if (headers.length > 0) {
+            data.push(headers);
         }
         tbody.querySelectorAll('tr').forEach(tr => {
             const rowData = [];
@@ -228,15 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setButtonLoading(button, true);
 
         const tableBody = type === 'users' ? usersTableBody : clientsTableBody;
-        const hasHeader = type === 'clients';
-        
-        let tableData;
-        if (type === 'users') {
-             const userData = getTableData(tableBody, false);
-             tableData = [["usuario", "senha", "perfil"], ...userData];
-        } else {
-             tableData = getTableData(tableBody, true);
-        }
+        const headers = type === 'users' ? ["usuario", "senha", "perfil"] : clientDataHeaders;
+        const tableData = getTableData(tableBody, headers);
         
         const payload = {
             action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
@@ -244,24 +247,29 @@ document.addEventListener('DOMContentLoaded', () => {
             profile: currentUser.profile, 
             data: tableData
         };
-
+        
         try {
             const response = await fetch(googleScriptURL, {
                 method: 'POST',
+                body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
             });
+
+            if (!response.ok) {
+                 const errorText = await response.text();
+                 throw new Error(`Erro do servidor: ${response.status} ${errorText}`);
+            }
             
             const result = await response.json();
             if (result.result !== 'success') {
-                throw new Error(result.message || 'Erro desconhecido no servidor.');
+                throw new Error(result.message || 'Ocorreu um erro desconhecido no servidor.');
             }
             
             showToast('Alterações salvas com sucesso!');
-            setTimeout(() => fetchAndRenderTable(type), 1000); 
+            await fetchAndRenderTable(type); // Espera o recarregamento
         } catch (error) {
             console.error(`Erro ao salvar ${type}:`, error);
-            showToast(`Falha ao salvar ${type}. Verifique o console.`);
+            showToast(`Falha ao salvar. ${error.message}`, true);
         } finally {
             setButtonLoading(button, false);
         }

@@ -108,6 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
             await fetchAndRenderTable('users');
+        } else {
+            usersSection.classList.add('hidden'); // Garante que a seção de usuários está escondida para editores
         }
         await fetchAndRenderTable('clients');
     };
@@ -236,11 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
              tableData = getTableData(tableBody, true);
         }
         
-        // Envia o perfil do usuário para o backend tomar a decisão correta
         const payload = {
             action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
             user: currentUser.username,
-            profile: currentUser.profile, // Envia o perfil atual
+            profile: currentUser.profile, 
             data: tableData
         };
 

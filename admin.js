@@ -29,10 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const EDITABLE_CLIENT_COLUMNS = [5, 9]; // F: address (índice 5), J: statusEmprestimo (índice 9)
 
     const hardcodedUsers = {
-        "2500": { password: "7579", profile: "Administrador" },
-        "2501": { password: "0166", profile: "Editor" },
-        "2502": { password: "7041", profile: "Editor" },
-        "2503": { password: "ABC123", profile: "Editor" }
+        "1979": { password: "7579", profile: "Administrador" },
+        "2004": { password: "7041", profile: "Editor" },
     };
 
     let currentUser = null;

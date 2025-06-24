@@ -1,3 +1,4 @@
+// Aguarda o carregamento completo da página antes de executar o script
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELEÇÃO DE ELEMENTOS DO DOM ---
@@ -7,17 +8,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginError = document.getElementById('login-error');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const loginButton = loginForm.querySelector('button[type="submit"]');
     const userProfileName = document.getElementById('user-profile-name');
     const logoutBtn = document.getElementById('logout-btn');
+
+    // Seção de Usuários
     const usersSection = document.getElementById('users-section');
     const usersTableBody = document.getElementById('users-table-body');
     const addUserRowBtn = document.getElementById('add-user-row-btn');
     const saveUsersBtn = document.getElementById('save-users-btn');
+
+    // Seção de Clientes
     const clientsSection = document.getElementById('clients-section');
     const clientsTableHead = document.getElementById('clients-table-head');
     const clientsTableBody = document.getElementById('clients-table-body');
     const addClientRowBtn = document.getElementById('add-client-row-btn');
     const saveClientsBtn = document.getElementById('save-clients-btn');
+    
+    // Modal e Notificações
     const confirmationModal = document.getElementById('confirmation-modal');
     const cancelBtn = document.getElementById('cancel-btn');
     const confirmBtn = document.getElementById('confirm-btn');
@@ -26,13 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
-    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // F: address (índice 5), J: statusEmprestimo (índice 9)
-
-    const hardcodedUsers = {
-        "1979": { password: "7579", profile: "Administrador" },
-        "2004": { password: "7041", profile: "Editor" },
-    };
-
+    
+    // As senhas foram removidas do código! A verificação agora é segura.
     let currentUser = null;
     let clientDataHeaders = [];
     
@@ -45,28 +48,53 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { toast.classList.remove('opacity-100'); }, 3000);
     };
     
-    const setButtonLoading = (button, isLoading) => {
+    const setButtonLoading = (button, isLoading, originalText = 'Entrar') => {
         const btnText = button.querySelector('.btn-text');
         const loader = button.querySelector('.loader-sm');
-        btnText.classList.toggle('hidden', isLoading);
-        loader.classList.toggle('hidden', !isLoading);
+        if(btnText){
+            btnText.classList.toggle('hidden', isLoading);
+        } else {
+             button.textContent = isLoading ? '' : originalText;
+        }
+
+        if(loader){
+            loader.classList.toggle('hidden', !isLoading);
+        }
         button.disabled = isLoading;
     };
     
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        setButtonLoading(loginButton, true, 'Entrar');
+        loginError.classList.add('hidden');
+
         const username = usernameInput.value;
         const password = passwordInput.value;
-        const user = hardcodedUsers[username];
+        
+        try {
+            const response = await fetch(googleScriptURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', username, password })
+            });
 
-        if (user && user.password === password) {
-            currentUser = { username, ...user };
-            loginScreen.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            userProfileName.textContent = currentUser.profile;
-            initializeDashboard();
-        } else {
-            loginError.classList.remove('hidden');
+            const result = await response.json();
+
+            if (result.result === 'success') {
+                currentUser = { username: result.username, profile: result.profile };
+                loginScreen.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                userProfileName.textContent = currentUser.profile;
+                await initializeDashboard();
+            } else {
+                loginError.classList.remove('hidden');
+                showToast(result.message || 'Usuário ou senha inválidos.', true);
+            }
+        } catch (error) {
+            console.error('Erro de Login:', error);
+            showToast('Erro de conexão ao tentar fazer login.', true);
+        } finally {
+            setButtonLoading(loginButton, false, 'Entrar');
         }
     };
 
@@ -84,18 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initializeDashboard = async () => {
-        await fetchAndRenderTable('clients');
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
             await fetchAndRenderTable('users');
         } else {
             usersSection.classList.add('hidden'); 
         }
+        await fetchAndRenderTable('clients');
     };
 
     const fetchAndRenderTable = async (type) => {
         try {
-            const url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            let url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            if (type === 'clients' && currentUser.profile === 'Editor') {
+                url += `&user=${currentUser.username}`;
+            }
+            
             const response = await fetch(url);
             if (!response.ok) throw new Error('Falha na resposta da rede.');
             const data = await response.json();
@@ -112,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderUsersTable = (data) => {
-        const headers = data[0];
         const rows = data.slice(1);
         usersTableBody.innerHTML = '';
         rows.forEach(rowData => {
@@ -134,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clientDataHeaders = data[0] || [];
         let rows = data.slice(1);
         
-        // Filtra para Editores no lado do cliente
         if (currentUser.profile === 'Editor') {
             const referenceNameIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
             if (referenceNameIndex !== -1) {
@@ -223,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clientsTableBody.querySelectorAll('tr').forEach(tr => {
             const rowData = [];
             tr.querySelectorAll('td').forEach(td => {
-                 // Adiciona o conteúdo da célula, ignorando a última (célula de ações)
                 if(!td.querySelector('button')) {
                     rowData.push(td.textContent.trim());
                 }

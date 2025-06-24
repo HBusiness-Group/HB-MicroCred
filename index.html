@@ -41,15 +41,22 @@
 </head>
 <body class="bg-slate-100">
     <!-- Container Principal do Formulário -->
-    <div id="form-container" class="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
+    <div id="form-container" class="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
         
+        <!-- Ícone de Acesso ao Admin -->
+        <a href="admin.html" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" title="Acesso Restrito">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </a>
+
         <header class="text-center mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">HB MicroCred</h1>
             <p class="text-slate-500 mt-1 text-sm sm:text-base">Plataforma Digital para Requisição e Análise de Crédito</p>
         </header>
 
-        <form id="loan-form">
-            <div class="space-y-6">
+        <form id="loan-form" novalidate>
+            <div class="space-y-8">
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Dados do Cliente</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -121,15 +128,65 @@
                     </div>
                 </div>
 
+                <!-- NOVA Seção Termos do Acordo -->
                 <div>
-                    <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Termos do Acordo</h2>
-                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 sm:p-6 space-y-3 text-slate-700">
-                        <p><strong>Valor do Crédito:</strong> <span class="font-bold text-blue-800">R$ 500,00</span></p>
-                        <p><strong>Forma de Pagamento:</strong> <span class="font-bold text-blue-800">22 parcelas diárias de R$ 30,00 cada</span></p>
-                        <p><strong>Período:</strong> segunda a sábado, com início no dia seguinte à concessão do crédito.</p>
-                        <p class="text-xs text-red-600 text-justify">O não pagamento poderá resultar no repasse dos valores pendentes ao responsável por sua indicação. Por isso, recomendamos o cumprimento do acordo firmado.</p>
+                    <div class="flex items-center gap-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Escolha seu Crédito</h2>
+                    </div>
+                     <!-- Texto de aviso adicionado -->
+                    <p class="text-xs text-red-600 mt-2">O valor do crédito solicitado está sujeito à avaliação do responsável pela sua indicação.</p>
+                    
+                    <div class="mt-4 bg-slate-50/70 p-5 rounded-xl border border-blue-100 space-y-4">
+                        <!-- Opção 1 -->
+                        <div>
+                            <input type="radio" name="requestedAmount" id="option500" value="500" class="hidden peer" required>
+                            <label for="option500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
+                                <div>
+                                    <strong class="block text-slate-800 text-base">Crédito de R$ 500,00</strong>
+                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 30,00</span>
+                                </div>
+                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
+                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Opção 2 -->
+                        <div>
+                            <input type="radio" name="requestedAmount" id="option1000" value="1000" class="hidden peer">
+                            <label for="option1000" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
+                                <div>
+                                    <strong class="block text-slate-800 text-base">Crédito de R$ 1.000,00</strong>
+                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 60,00</span>
+                                </div>
+                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
+                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                </div>
+                            </label>
+                        </div>
+                        <!-- Opção 3 -->
+                         <div>
+                            <input type="radio" name="requestedAmount" id="option1500" value="1500" class="hidden peer">
+                            <label for="option1500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
+                                <div>
+                                    <strong class="block text-slate-800 text-base">Crédito de R$ 1.500,00</strong>
+                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 90,00</span>
+                                </div>
+                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
+                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200">
+                           <p class="text-justify text-slate-700"><strong>Período de Pagamento:</strong> As parcelas são diárias, de segunda a sábado, com início no primeiro dia útil após a concessão do crédito. Domingos e feriados (nacionais, estaduais ou municipais) são considerados não úteis e, portanto, não entram na agenda de pagamentos. Nesses casos, a cobrança é automaticamente transferida para o próximo dia útil, dentro do intervalo de segunda a sábado.</p>
+                            <p class="text-xs text-red-600 text-justify mt-3">O não pagamento poderá resultar no repasse dos valores pendentes ao responsável por sua indicação. Por isso, recomendamos o cumprimento do acordo firmado.</p>
+                        </div>
                     </div>
                 </div>
+
 
                 <div class="flex items-start mt-6">
                     <div class="flex items-center h-5">
@@ -161,10 +218,6 @@
                 </div>
             </div>
         </form>
-         <!-- Link para a área do administrador -->
-        <footer class="text-center mt-8">
-            <a href="admin.html" class="text-xs text-slate-400 hover:text-slate-600">Área do Administrador</a>
-        </footer>
     </div>
 
     <!-- Tela de Sucesso -->
@@ -197,9 +250,9 @@
                 <p class="text-justify"><strong>Credor:</strong> HB MicroCred (pessoa física)</p>
                 <p id="debtor-info" class="text-justify"><strong>Devedor:</strong> [A ser preenchido]</p>
                 <h3 class="text-base font-semibold text-slate-800 pt-2">3. Valor do Crédito</h3>
-                <p class="text-justify">R$ 500,00 (quinhentos reais), a ser creditado via PIX na conta bancária informada pelo Devedor no momento da formalização deste acordo.</p>
+                <p id="agreement-amount" class="text-justify">[A ser preenchido com a opção selecionada]</p>
                 <h3 class="text-base font-semibold text-slate-800 pt-2">4. Condições de Pagamento</h3>
-                <p class="text-justify">O valor será restituído em 22 (vinte e duas) parcelas diárias no valor de R$ 30,00 (trinta reais) cada, com vencimento de segunda a sábado, iniciando-se no primeiro dia útil subsequente à liberação do crédito.</p>
+                <p id="agreement-terms" class="text-justify">[A ser preenchido com a opção selecionada]</p>
                 <h3 class="text-base font-semibold text-slate-800 pt-2">5. Disposições Legais e Garantias do Credor</h3>
                 <p class="text-justify">Conforme o artigo 586 do Código Civil, caracteriza-se este instrumento como mútuo oneroso entre pessoas físicas, sendo plenamente válido e exigível. Em caso de inadimplência, aplica-se o artigo 394 do Código Civil, que considera o devedor em mora a partir do vencimento da obrigação. O não pagamento de qualquer das parcelas autoriza o Credor a tomar as medidas cabíveis para cobrança amigável ou judicial do valor devido, acrescido de eventuais encargos legais, correção monetária e honorários advocatícios, conforme permitido pelos artigos 389, 395 e 404 do Código Civil.</p>
                 <h3 class="text-base font-semibold text-slate-800 pt-2">6. Reconhecimento de Dívida</h3>
@@ -207,6 +260,7 @@
             </div>
         </div>
     </div>
+    
     <script>
         // Selecionando Elementos
         const formContainer = document.getElementById('form-container');
@@ -214,6 +268,7 @@
         const loanForm = document.getElementById('loan-form');
         const requiredTextInputs = Array.from(loanForm.querySelectorAll('input[required]:not([type="radio"])'));
         const pixOptions = Array.from(loanForm.querySelectorAll('input[name="pixKeyOption"]'));
+        const creditOptions = Array.from(loanForm.querySelectorAll('input[name="requestedAmount"]'));
         const openPopBtn = document.getElementById('open-pop-btn');
         const closePopBtn = document.getElementById('close-pop-btn');
         const clearFormBtn = document.getElementById('clear-form-btn');
@@ -226,6 +281,8 @@
         const phoneInput = document.getElementById('phone');
         const referencePhoneInput = document.getElementById('referencePhone');
         const debtorInfo = document.getElementById('debtor-info');
+        const agreementAmount = document.getElementById('agreement-amount');
+        const agreementTerms = document.getElementById('agreement-terms');
         const statusMessage = document.getElementById('status-message');
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
@@ -240,7 +297,7 @@
         const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
 
         // Funções de Validação e Formatação
-        const checkFormCompletion = () => requiredTextInputs.every(input => input.value.trim() !== '') && pixOptions.some(radio => radio.checked);
+        const checkFormCompletion = () => requiredTextInputs.every(input => input.value.trim() !== '') && pixOptions.some(radio => radio.checked) && creditOptions.some(radio => radio.checked);
         const updateAgreementButtonState = () => { openPopBtn.disabled = !checkFormCompletion(); };
         const showStatusMessage = (message, type) => {
             statusMessage.textContent = message;
@@ -307,6 +364,13 @@
             value = value.replace(/(\d{5})(\d)/, '$1-$2');
             e.target.value = value;
         };
+        
+        const resetErrors = () => {
+             cpfInput.classList.remove('input-error');
+             phoneInput.classList.remove('input-error');
+             referencePhoneInput.classList.remove('input-error');
+             cpfError.classList.add('hidden');
+        }
 
         // Event Listeners
         cepInput.addEventListener('blur', async (e) => {
@@ -333,19 +397,17 @@
             }
         });
         fullNameInput.addEventListener('input', formatNameInput);
-        referenceNameInput.addEventListener('input', formatNumericOnly); // Listener atualizado
+        referenceNameInput.addEventListener('input', formatNumericOnly);
         complementoInput.addEventListener('input', formatToUppercase);
         cpfInput.addEventListener('input', formatCpf);
         cpfInput.addEventListener('blur', handleCpfValidation);
         phoneInput.addEventListener('input', formatPhone);
         referencePhoneInput.addEventListener('input', formatPhone);
         cepInput.addEventListener('input', formatCep);
-        requiredTextInputs.forEach(input => {
-            if (!['fullName', 'referenceName', 'cpf', 'phone', 'referencePhone', 'cep'].includes(input.id)) {
-                input.addEventListener('input', updateAgreementButtonState);
-            }
-        });
+        
+        requiredTextInputs.forEach(input => input.addEventListener('input', updateAgreementButtonState));
         pixOptions.forEach(radio => radio.addEventListener('change', updateAgreementButtonState));
+        creditOptions.forEach(radio => radio.addEventListener('change', updateAgreementButtonState));
 
         clearFormBtn.addEventListener('click', () => {
             loanForm.reset();
@@ -353,8 +415,7 @@
             ruaInput.value = '';
             addressResultDiv.classList.add('hidden');
             addressResultDiv.textContent = '';
-            cpfInput.classList.remove('input-error');
-            cpfError.classList.add('hidden');
+            resetErrors();
             updateAgreementButtonState();
             statusMessage.classList.add('hidden');
         });
@@ -366,18 +427,30 @@
 
         loanForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            resetErrors();
+            
             if (!validateCPF(cpfInput.value)) {
                 showStatusMessage('O CPF informado é inválido. Por favor, corrija.', 'error');
                 cpfInput.classList.add('input-error');
                 cpfError.classList.remove('hidden');
                 return;
             }
-            if (phoneInput.value.replace(/\D/g, '').length !== 11 || referencePhoneInput.value.replace(/\D/g, '').length !== 11) {
-                showStatusMessage('Os números de telefone devem conter 11 dígitos (DDD + número).', 'error');
+            if (phoneInput.value.replace(/\D/g, '').length !== 11) {
+                showStatusMessage('O seu "Telefone com WhatsApp" deve ter 11 dígitos.', 'error');
+                phoneInput.classList.add('input-error');
                 return;
             }
+             if (referencePhoneInput.value.replace(/\D/g, '').length !== 11) {
+                showStatusMessage('O "WhatsApp da Indicação" deve ter 11 dígitos.', 'error');
+                referencePhoneInput.classList.add('input-error');
+                return;
+            }
+            if (!checkFormCompletion()) {
+                 showStatusMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
+                 return;
+            }
             if (!document.getElementById('terms-acceptance').checked) {
-                showStatusMessage('É obrigatório aceitar os termos para continuar.', 'error');
+                showStatusMessage('Você deve ler e concordar com os termos para continuar.', 'error');
                 return;
             }
             setLoading(true);
@@ -409,6 +482,16 @@
         });
 
         openPopBtn.addEventListener('click', () => {
+            const selectedOption = loanForm.querySelector('input[name="requestedAmount"]:checked');
+            if(selectedOption) {
+                const optionDetails = {
+                    "500": { amount: "R$ 500,00 (quinhentos reais)", terms: "22 (vinte e duas) parcelas diárias no valor de R$ 30,00 (trinta reais) cada" },
+                    "1000": { amount: "R$ 1.000,00 (mil reais)", terms: "22 (vinte e duas) parcelas diárias no valor de R$ 60,00 (sessenta reais) cada" },
+                    "1500": { amount: "R$ 1.500,00 (mil e quinhentos reais)", terms: "22 (vinte e duas) parcelas diárias no valor de R$ 90,00 (noventa reais) cada" }
+                };
+                agreementAmount.textContent = `${optionDetails[selectedOption.value].amount}, a ser creditado via PIX na conta bancária informada pelo Devedor no momento da formalização deste acordo.`;
+                agreementTerms.textContent = `O valor será restituído em ${optionDetails[selectedOption.value].terms}, com vencimento de segunda a sábado, iniciando-se no primeiro dia útil subsequente à liberação do crédito.`;
+            }
             debtorInfo.innerHTML = `<strong>Devedor:</strong> ${fullNameInput.value.trim()}, inscrito no CPF sob o nº ${cpfInput.value.trim()}`;
             popModal.classList.remove('hidden');
         });

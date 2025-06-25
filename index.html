@@ -13,7 +13,6 @@
         .cpf-placeholder::placeholder {
             color: #9ca3af;
         }
-        /* Estilo para o botão desabilitado */
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -23,17 +22,10 @@
             -webkit-animation: spinner 1.5s linear infinite;
             animation: spinner 1.5s linear infinite;
         }
-
         @-webkit-keyframes spinner {
             0% { -webkit-transform: rotate(0deg); }
             100% { -webkit-transform: rotate(360deg); }
         }
-
-        @keyframes spinner {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Estilo para erro de validação */
         .input-error {
             border-color: #ef4444; /* red-500 */
         }
@@ -41,15 +33,8 @@
 </head>
 <body class="bg-slate-100">
     <!-- Container Principal do Formulário -->
-    <div id="form-container" class="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
+    <div id="form-container" class="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
         
-        <!-- Ícone de Acesso ao Admin -->
-        <a href="admin.html" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" title="Acesso Restrito">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-        </a>
-
         <header class="text-center mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">HB MicroCred</h1>
             <p class="text-slate-500 mt-1 text-sm sm:text-base">Plataforma Digital para Requisição e Análise de Crédito</p>
@@ -89,7 +74,6 @@
                     </div>
                 </div>
 
-                <!-- Seção de Endereço via CEP -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Endereço</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
@@ -113,7 +97,6 @@
                     </div>
                 </div>
 
-                <!-- Seção Indicação -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Indicação</h2>
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -128,7 +111,6 @@
                     </div>
                 </div>
 
-                <!-- NOVA Seção Termos do Acordo -->
                 <div>
                     <div class="flex items-center gap-x-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -136,11 +118,9 @@
                         </svg>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Escolha seu Crédito</h2>
                     </div>
-                     <!-- Texto de aviso adicionado -->
                     <p class="text-xs text-red-600 mt-2">O valor do crédito solicitado está sujeito à avaliação do responsável pela sua indicação.</p>
                     
                     <div class="mt-4 bg-slate-50/70 p-5 rounded-xl border border-blue-100 space-y-4">
-                        <!-- Opção 1 -->
                         <div>
                             <input type="radio" name="requestedAmount" id="option500" value="500" class="hidden peer" required>
                             <label for="option500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
@@ -153,7 +133,6 @@
                                 </div>
                             </label>
                         </div>
-                        <!-- Opção 2 -->
                         <div>
                             <input type="radio" name="requestedAmount" id="option1000" value="1000" class="hidden peer">
                             <label for="option1000" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
@@ -166,7 +145,6 @@
                                 </div>
                             </label>
                         </div>
-                        <!-- Opção 3 -->
                          <div>
                             <input type="radio" name="requestedAmount" id="option1500" value="1500" class="hidden peer">
                             <label for="option1500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
@@ -179,14 +157,12 @@
                                 </div>
                             </label>
                         </div>
-
                         <div class="pt-4 border-t border-slate-200">
                            <p class="text-justify text-slate-700"><strong>Período de Pagamento:</strong> As parcelas são diárias, de segunda a sábado, com início no primeiro dia útil após a concessão do crédito. Domingos e feriados (nacionais, estaduais ou municipais) são considerados não úteis e, portanto, não entram na agenda de pagamentos. Nesses casos, a cobrança é automaticamente transferida para o próximo dia útil, dentro do intervalo de segunda a sábado.</p>
                             <p class="text-xs text-red-600 text-justify mt-3">O não pagamento poderá resultar no repasse dos valores pendentes ao responsável por sua indicação. Por isso, recomendamos o cumprimento do acordo firmado.</p>
                         </div>
                     </div>
                 </div>
-
 
                 <div class="flex items-start mt-6">
                     <div class="flex items-center h-5">

@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentUser = null;
     let clientDataHeaders = [];
+    let fullClientData = [];
     
     // --- FUNÇÕES ---
 
@@ -59,17 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify({ action: 'login', username: usernameInput.value, password: passwordInput.value }),
                 headers: { 'Content-Type': 'application/json' },
-                mode: 'cors'
             });
-
-            if (!response.ok) throw new Error(`Erro de rede: ${response.statusText}`);
+            
             const result = await response.json();
-            if (result.result !== 'success') throw new Error(result.message || "Credenciais inválidas.");
+            if (result.result !== 'success') throw new Error(result.message);
 
             currentUser = { username: result.username, profile: result.profile };
             loginScreen.classList.add('hidden');
             mainContent.classList.remove('hidden');
-            userProfileName.textContent = currentUser.profile;
+            userProfileName.textContent = `${result.username} (${result.profile})`;
             await initializeDashboard();
 
         } catch (error) {
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const initializeDashboard = async () => {
-        clientsTableBody.innerHTML = '<tr><td colspan="11" class="text-center p-4">Carregando dados dos clientes...</td></tr>';
+        clientsTableBody.innerHTML = '<tr><td colspan="11" class="text-center p-4">Carregando dados...</td></tr>';
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
             usersTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>';
@@ -108,30 +107,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (type === 'users') {
-                renderTable(usersTableBody, data.slice(1), true, ["Usuário", "Senha", "Perfil"]);
+                renderTable('users', data.slice(1), true, ["Usuário", "Senha", "Perfil"]);
             } else {
                 clientDataHeaders = data[0] || [];
-                let clientRows = data.slice(1);
-                if(currentUser.profile === 'Editor') {
-                    const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
-                    if(refIndex > -1) {
-                         clientRows = clientRows.filter(row => row[refIndex] === currentUser.username);
-                    }
-                }
-                renderTable(clientsTableBody, clientRows, true, clientDataHeaders, EDITABLE_CLIENT_COLUMNS);
+                fullClientData = data; // Armazena todos os dados
+                renderClientsView();
             }
         } catch (error) {
             showToast(`Falha ao carregar ${type}.`, true);
         }
     };
+    
+    const renderClientsView = () => {
+        let rowsToDisplay = fullClientData.slice(1);
+        if (currentUser.profile === 'Editor') {
+            const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+            if (refIndex > -1) {
+                rowsToDisplay = rowsToDisplay.filter(row => row[refIndex] === currentUser.username);
+            }
+        }
+        renderTable('clients', rowsToDisplay, true, clientDataHeaders, EDITABLE_CLIENT_COLUMNS);
+    };
 
-    const renderTable = (tbody, data, isEditable, headers, editableColumns = null) => {
+    const renderTable = (type, data, isEditable, headers, editableColumns = null) => {
+        const tbody = type === 'users' ? usersTableBody : clientsTableBody;
+        const thead = type === 'users' ? usersTableBody.previousElementSibling : clientsTableHead;
         tbody.innerHTML = '';
-        const tHead = tbody.previousElementSibling;
-        tHead.innerHTML = '';
+        thead.innerHTML = '';
         
         if (headers) {
-            const headerRow = tHead.insertRow();
+            const headerRow = thead.insertRow();
             headers.forEach(headerText => {
                 const th = document.createElement('th');
                 th.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
@@ -140,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const thAction = document.createElement('th');
             thAction.textContent = "Ações";
-            thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
             headerRow.appendChild(thAction);
         }
         
@@ -154,36 +158,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const canEdit = isEditable && (!editableColumns || editableColumns.includes(cellIndex));
                 if (canEdit) td.setAttribute('contenteditable', 'true');
             });
-            tr.appendChild(createActionsCell(tr));
+            tr.appendChild(createActionsCell(tr, type));
         });
     };
     
-    const createActionsCell = (row) => {
+    const createActionsCell = (row, type) => {
         const td = row.insertCell();
         td.className = "px-4 py-2 border-t border-slate-200";
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Excluir';
-        deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
-        deleteBtn.onclick = () => {
-            row.remove();
-            showToast("Linha removida. Salve para confirmar.");
-        };
-        td.appendChild(deleteBtn);
+        if (currentUser.profile === 'Administrador' || (type === 'clients' && currentUser.profile === 'Editor')) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Excluir';
+            deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
+            deleteBtn.onclick = () => row.remove();
+            td.appendChild(deleteBtn);
+        }
         return td;
     };
     
-    const addRow = (tbody, colCount, editableCols) => {
-        if (colCount === 0) return;
-        const tr = tbody.insertRow();
+    const addRow = (type) => {
+        const isUserTable = type === 'users';
+        const tbody = isUserTable ? usersTableBody : clientsTableBody;
+        const colCount = isUserTable ? 3 : clientDataHeaders.length;
+        if (colCount === 0 && !isUserTable) {
+             showToast("Carregue os dados primeiro.", true);
+             return;
+        }
+
+        const tr = tbody.insertRow(0); // Insere no topo
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
             const td = tr.insertCell();
             td.className = "px-4 py-2 border-t border-slate-200";
-            if (!editableCols || editableCols.includes(i)) {
-                 td.setAttribute('contenteditable', 'true');
-            }
+            const canEdit = isUserTable || EDITABLE_CLIENT_COLUMNS.includes(i);
+            if (canEdit) td.setAttribute('contenteditable', 'true');
         }
-        tr.appendChild(createActionsCell(tr));
+        tr.appendChild(createActionsCell(tr, type));
     };
     
     const getTableData = (tbody, headers) => {
@@ -204,16 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = type === 'users' ? saveUsersBtn : saveClientsBtn;
         setButtonLoading(button, true);
         
-        const tableBody = type === 'users' ? usersTableBody : clientsTableBody;
-        const headers = type === 'users' ? ["usuario", "senha", "perfil"] : clientDataHeaders;
-        const tableData = getTableData(tableBody, headers);
-
-        const payload = {
-            action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
-            user: currentUser.username,
-            profile: currentUser.profile,
-            data: tableData
-        };
+        let payload;
+        if (type === 'users') {
+            const tableData = getTableData(usersTableBody, ["usuario", "senha", "perfil"]);
+            payload = { action: 'updateUsers', data: tableData, user: currentUser.username, profile: currentUser.profile };
+        } else {
+            const tableData = getTableData(clientsTableBody, clientDataHeaders);
+            payload = { action: 'updateClients', data: tableData, user: currentUser.username, profile: currentUser.profile };
+        }
         
         try {
             const response = await fetch(googleScriptURL, {
@@ -222,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
             });
             
-            if (!response.ok) throw new Error(`Erro de rede: ${response.statusText}`);
             const result = await response.json();
             if (result.result !== 'success') throw new Error(result.message);
             showToast('Alterações salvas com sucesso!');
@@ -237,8 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT LISTENERS ---
     loginForm.addEventListener('submit', handleLogin);
     logoutBtn.addEventListener('click', handleLogout);
-    addUserRowBtn.addEventListener('click', () => addRow(usersTableBody, 3, null));
-    addClientRowBtn.addEventListener('click', () => addRow(clientsTableBody, clientDataHeaders.length, EDITABLE_CLIENT_COLUMNS));
+    addUserRowBtn.addEventListener('click', () => addRow('users'));
+    addClientRowBtn.addEventListener('click', () => addRow('clients'));
     saveUsersBtn.addEventListener('click', () => saveChanges('users'));
     saveClientsBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
     cancelBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));

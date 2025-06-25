@@ -57,10 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.classList.add('hidden');
 
         try {
+            const payload = { action: 'login', username: usernameInput.value, password: passwordInput.value };
             const response = await fetch(googleScriptURL, {
                 method: 'POST',
                 // Correção para evitar erro de CORS
-                body: JSON.stringify({ action: 'login', username: usernameInput.value, password: passwordInput.value }),
+                body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             });
             
@@ -94,10 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DO PAINEL ---
     const initializeDashboard = async () => {
-        clientsTableBody.innerHTML = `<tr><td colspan="11" class="text-center p-4">Carregando dados dos clientes...</td></tr>`;
+        clientsTableBody.innerHTML = '<tr><td colspan="11" class="text-center p-4">Carregando dados...</td></tr>';
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
-            usersTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>`;
+            usersTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>';
             await fetchAndRenderTable('users');
         }
         await fetchAndRenderTable('clients');
@@ -112,30 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.status === 'error') throw new Error(data.message);
 
             if (type === 'users') {
-                renderTable(usersTableBody, usersTableHead, data, { editable: true });
-            } else if (type === 'clients') {
+                renderTable('users', data.slice(1), data[0]);
+            } else {
                 clientDataHeaders = data[0] || [];
-                let clientRows = data.slice(1);
-                if (currentUser.profile === 'Editor') {
-                    const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
-                    if(refIndex > -1) {
-                         clientRows = clientRows.filter(row => row[refIndex] === currentUser.username);
-                    }
-                }
-                const headersToRender = clientDataHeaders.slice(1, 11); // Colunas B a K
-                renderTable(clientsTableBody, clientsTableHead, [headersToRender, ...clientRows], {
-                    editable: true,
-                    editableCols: currentUser.profile === 'Administrador' ? null : EDITABLE_CLIENT_COLUMNS_FOR_EDITOR
-                });
+                renderTable('clients', data.slice(1), clientDataHeaders.slice(1, 11)); // Mostra colunas B a K
             }
         } catch (error) {
-            showToast(`Falha ao carregar ${type}: ${error.message}`, true);
+            showToast(`Falha ao carregar ${type}.`, true);
         }
     };
 
-    const renderTable = (tbody, thead, data, options) => {
-        const headers = data[0];
-        const rows = data.slice(1);
+    const renderTable = (type, data, headers) => {
+        const isUsers = type === 'users';
+        const tbody = isUsers ? usersTableBody : clientsTableBody;
+        const thead = isUsers ? usersTableHead : clientsTableHead;
         
         tbody.innerHTML = '';
         thead.innerHTML = '';
@@ -152,23 +143,38 @@ document.addEventListener('DOMContentLoaded', () => {
         thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider bg-slate-50";
         headerRow.appendChild(thAction);
 
-        rows.forEach(rowData => {
+        let rowsToDisplay = data;
+        if (!isUsers && currentUser.profile === 'Editor') {
+            const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+            if (refIndex !== -1) {
+                rowsToDisplay = data.filter(row => row[refIndex] === currentUser.username);
+            }
+        }
+
+        rowsToDisplay.forEach(rowData => {
             const tr = tbody.insertRow();
             tr.className = "bg-white even:bg-slate-50";
+            tr.dataset.fullRow = JSON.stringify(rowData); // Guarda a linha completa
             
-            const dataToRender = tbody === clientsTableBody ? rowData.slice(1, 11) : rowData;
+            const dataToRender = isUsers ? rowData : rowData.slice(1, 11);
 
             dataToRender.forEach((cellData, cellIndex) => {
                 const td = tr.insertCell();
                 td.className = "px-4 py-2 border-t border-slate-200";
                 td.textContent = cellData;
                 
-                const originalColumnIndex = tbody === clientsTableBody ? cellIndex + 1 : cellIndex;
-                const isEditable = options.editable && (!options.editableCols || options.editableCols.includes(originalColumnIndex));
-
-                if (isEditable) {
-                    td.setAttribute('contenteditable', 'true');
+                let isCellEditable = false;
+                if (isUsers && currentUser.profile === 'Administrador') {
+                    isCellEditable = true;
+                } else if (!isUsers) {
+                    const originalColumnIndex = cellIndex + 1; 
+                    if (currentUser.profile === 'Administrador') {
+                         isCellEditable = true;
+                    } else if (currentUser.profile === 'Editor' && EDITABLE_CLIENT_COLUMNS_FOR_EDITOR.includes(originalColumnIndex)) {
+                        isCellEditable = true;
+                    }
                 }
+                if (isCellEditable) td.setAttribute('contenteditable', 'true');
             });
             tr.appendChild(createActionsCell(tr));
         });
@@ -186,9 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const addRow = (type) => {
-        const tbody = type === 'users' ? usersTableBody : clientsTableBody;
-        const colCount = type === 'users' ? 3 : 10;
-
+        const isUserTable = type === 'users';
+        const tbody = isUserTable ? usersTableBody : clientsTableBody;
+        const colCount = isUserTable ? 3 : 10;
+        
         const tr = tbody.insertRow(0); 
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
@@ -198,32 +205,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         tr.appendChild(createActionsCell(tr));
     };
-
-    const saveChanges = async (type) => {
-        const isUsers = type === 'users';
-        const button = isUsers ? saveUsersBtn : saveClientsBtn;
-        setButtonLoading(button, true);
-
-        const tbody = isUsers ? usersTableBody : clientsTableBody;
-        const headers = isUsers ? ["usuario", "senha", "perfil"] : clientDataHeaders;
-        
-        const dataToSave = [headers];
+    
+    const getTableData = (tbody, headers) => {
+        const data = [headers];
         tbody.querySelectorAll('tr').forEach(tr => {
-            const rowData = [];
-            tr.querySelectorAll('td').forEach((td, index) => {
-                if (index < headers.length) {
-                    rowData.push(td.textContent.trim());
+            let originalRowData = JSON.parse(tr.dataset.fullRow || '[]');
+            // Se for uma linha nova, cria um array vazio do tamanho correto
+            if (originalRowData.length === 0) {
+                 originalRowData = new Array(headers.length).fill('');
+            }
+           
+            const displayedCells = tr.querySelectorAll('td');
+            displayedCells.forEach((td, index) => {
+                const originalIndex = tbody === clientsTableBody ? index + 1 : index;
+                 if (index < headers.length) {
+                    originalRowData[originalIndex] = td.textContent.trim();
                 }
             });
-            if(rowData.length > 0) dataToSave.push(rowData);
+            if (originalRowData.length > 0) data.push(originalRowData);
         });
+        return data;
+    };
 
-        const payload = {
-            action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
-            user: currentUser.username,
-            profile: currentUser.profile,
-            data: dataToSave
-        };
+    const saveChanges = async (type) => {
+        const button = type === 'users' ? saveUsersBtn : saveClientsBtn;
+        setButtonLoading(button, true);
+        
+        let payload;
+        if (type === 'users') {
+             const tableData = getTableData(usersTableBody, ["usuario", "senha", "perfil"]);
+            payload = { action: 'updateUsers', data: tableData, user: currentUser.username, profile: currentUser.profile };
+        } else {
+            const tableData = getTableData(clientsTableBody, clientDataHeaders);
+            payload = { action: 'updateClients', data: tableData, user: currentUser.username, profile: currentUser.profile };
+        }
         
         try {
             const response = await fetch(googleScriptURL, {

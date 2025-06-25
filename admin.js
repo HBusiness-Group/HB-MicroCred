@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
-    
+    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // Coluna F (address), Coluna J (statusEmprestimo)
+
     // As senhas foram removidas do código! A verificação agora é segura.
     let currentUser = null;
     let clientDataHeaders = [];
@@ -45,56 +46,48 @@ document.addEventListener('DOMContentLoaded', () => {
         toastMessage.textContent = message;
         toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300';
         toast.classList.add(isError ? 'bg-red-600' : 'bg-slate-800', 'opacity-100');
-        setTimeout(() => { toast.classList.remove('opacity-100'); }, 3000);
+        setTimeout(() => toast.classList.remove('opacity-100'), 3000);
     };
     
-    const setButtonLoading = (button, isLoading, originalText = 'Entrar') => {
+    const setButtonLoading = (button, isLoading, originalText = '') => {
         const btnText = button.querySelector('.btn-text');
         const loader = button.querySelector('.loader-sm');
-        if(btnText){
-            btnText.classList.toggle('hidden', isLoading);
+        if (isLoading) {
+            if (btnText) btnText.classList.add('hidden');
+            if (loader) loader.classList.remove('hidden');
         } else {
-             button.textContent = isLoading ? '' : originalText;
-        }
-
-        if(loader){
-            loader.classList.toggle('hidden', !isLoading);
+            if (btnText) btnText.classList.remove('hidden');
+            if (loader) loader.classList.add('hidden');
         }
         button.disabled = isLoading;
     };
     
     const handleLogin = async (e) => {
         e.preventDefault();
-        setButtonLoading(loginButton, true, 'Entrar');
+        setButtonLoading(loginButton, true);
         loginError.classList.add('hidden');
 
-        const username = usernameInput.value;
-        const password = passwordInput.value;
-        
         try {
             const response = await fetch(googleScriptURL, {
                 method: 'POST',
+                body: JSON.stringify({ action: 'login', username: usernameInput.value, password: passwordInput.value }),
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'login', username, password })
             });
 
             const result = await response.json();
+            if (result.result !== 'success') throw new Error(result.message);
 
-            if (result.result === 'success') {
-                currentUser = { username: result.username, profile: result.profile };
-                loginScreen.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                userProfileName.textContent = currentUser.profile;
-                await initializeDashboard();
-            } else {
-                loginError.classList.remove('hidden');
-                showToast(result.message || 'Usuário ou senha inválidos.', true);
-            }
+            currentUser = { username: result.username, profile: result.profile };
+            loginScreen.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            userProfileName.textContent = currentUser.profile;
+            await initializeDashboard();
+
         } catch (error) {
-            console.error('Erro de Login:', error);
-            showToast('Erro de conexão ao tentar fazer login.', true);
+            loginError.textContent = error.message;
+            loginError.classList.remove('hidden');
         } finally {
-            setButtonLoading(loginButton, false, 'Entrar');
+            setButtonLoading(loginButton, false);
         }
     };
 
@@ -106,173 +99,128 @@ document.addEventListener('DOMContentLoaded', () => {
         passwordInput.value = '';
         loginError.classList.add('hidden');
         usersSection.classList.add('hidden');
-        usersTableBody.innerHTML = '';
-        clientsTableHead.innerHTML = '';
-        clientsTableBody.innerHTML = '';
     };
 
     const initializeDashboard = async () => {
+        clientsTableBody.innerHTML = '<tr><td colspan="11" class="text-center p-4">Carregando dados dos clientes...</td></tr>';
         if (currentUser.profile === 'Administrador') {
             usersSection.classList.remove('hidden');
+            usersTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>';
             await fetchAndRenderTable('users');
-        } else {
-            usersSection.classList.add('hidden'); 
         }
         await fetchAndRenderTable('clients');
     };
 
     const fetchAndRenderTable = async (type) => {
         try {
-            let url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            if (type === 'clients' && currentUser.profile === 'Editor') {
-                url += `&user=${currentUser.username}`;
-            }
-            
+            const url = `${googleScriptURL}?action=get${type.charAt(0).toUpperCase() + type.slice(1)}`;
             const response = await fetch(url);
             if (!response.ok) throw new Error('Falha na resposta da rede.');
             const data = await response.json();
 
             if (type === 'users') {
-                renderUsersTable(data);
-            } else if (type === 'clients') {
-                renderClientsTable(data);
+                renderTable(usersTableBody, data.slice(1), true, ["Usuário", "Senha", "Perfil"]);
+            } else {
+                clientDataHeaders = data[0] || [];
+                let clientRows = data.slice(1);
+                if(currentUser.profile === 'Editor') {
+                    const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+                    if(refIndex > -1) {
+                         clientRows = clientRows.filter(row => row[refIndex] === currentUser.username);
+                    }
+                }
+                renderTable(clientsTableBody, clientRows, true, clientDataHeaders, EDITABLE_CLIENT_COLUMNS);
             }
         } catch (error) {
-            console.error(`Erro ao buscar dados de ${type}:`, error);
-            showToast(`Falha ao carregar dados de ${type}.`, true);
+            showToast(`Falha ao carregar ${type}.`, true);
         }
     };
 
-    const renderUsersTable = (data) => {
-        const rows = data.slice(1);
-        usersTableBody.innerHTML = '';
-        rows.forEach(rowData => {
-            const tr = document.createElement('tr');
-            tr.className = "bg-white even:bg-slate-50";
-            rowData.forEach(cellData => {
-                const td = document.createElement('td');
-                td.className = "px-4 py-2 border-t border-slate-200";
-                td.textContent = cellData;
-                td.setAttribute('contenteditable', 'true');
-                tr.appendChild(td);
-            });
-            tr.appendChild(createActionsCell(tr, 'users'));
-            usersTableBody.appendChild(tr);
-        });
-    };
-
-    const renderClientsTable = (data) => {
-        clientDataHeaders = data[0] || [];
-        let rows = data.slice(1);
+    const renderTable = (tbody, data, isEditable, headers, editableColumns = null) => {
+        tbody.innerHTML = '';
+        const tHead = tbody.previousElementSibling;
+        tHead.innerHTML = '';
         
-        if (currentUser.profile === 'Editor') {
-            const referenceNameIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
-            if (referenceNameIndex !== -1) {
-                rows = rows.filter(row => row[referenceNameIndex] === currentUser.username);
-            }
+        if (headers) {
+            const headerRow = tHead.insertRow();
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            const thAction = document.createElement('th');
+            thAction.textContent = "Ações";
+            thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
+            headerRow.appendChild(thAction);
         }
-
-        clientsTableHead.innerHTML = '';
-        const headerRow = document.createElement('tr');
-        clientDataHeaders.forEach(headerText => {
-            const th = document.createElement('th');
-            th.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
-            th.textContent = headerText;
-            headerRow.appendChild(th);
-        });
-        const thAction = document.createElement('th');
-        thAction.textContent = "Ações";
-        thAction.className = "px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider";
-        headerRow.appendChild(thAction);
-        clientsTableHead.appendChild(headerRow);
-
-        clientsTableBody.innerHTML = '';
-        rows.forEach(rowData => {
-            const tr = document.createElement('tr');
+        
+        data.forEach(rowData => {
+            const tr = tbody.insertRow();
             tr.className = "bg-white even:bg-slate-50";
             rowData.forEach((cellData, cellIndex) => {
-                const td = document.createElement('td');
+                const td = tr.insertCell();
                 td.className = "px-4 py-2 border-t border-slate-200";
                 td.textContent = cellData;
-                if (EDITABLE_CLIENT_COLUMNS.includes(cellIndex)) {
+                const canEdit = isEditable && (!editableColumns || editableColumns.includes(cellIndex));
+                if (canEdit) {
                     td.setAttribute('contenteditable', 'true');
                 }
-                tr.appendChild(td);
             });
-            tr.appendChild(createActionsCell(tr, 'clients'));
-            clientsTableBody.appendChild(tr);
+            tr.appendChild(createActionsCell(tr));
         });
     };
     
-    const createActionsCell = (row, type) => {
-        const td = document.createElement('td');
+    const createActionsCell = (row) => {
+        const td = row.insertCell();
         td.className = "px-4 py-2 border-t border-slate-200";
-        if (currentUser.profile === 'Administrador' || (type === 'clients' && currentUser.profile === 'Editor')) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Excluir';
-            deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
-            deleteBtn.onclick = () => {
-                row.remove();
-                showToast("Linha removida. Salve para confirmar.");
-            };
-            td.appendChild(deleteBtn);
-        }
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Excluir';
+        deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
+        deleteBtn.onclick = () => {
+            row.remove();
+            showToast("Linha removida. Salve para confirmar.");
+        };
+        td.appendChild(deleteBtn);
         return td;
     };
     
-    const addRow = (tbody, colCount) => {
+    const addRow = (tbody, colCount, editableCols) => {
         if (colCount === 0) return;
-        const tr = document.createElement('tr');
+        const tr = tbody.insertRow();
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
-            const td = document.createElement('td');
+            const td = tr.insertCell();
             td.className = "px-4 py-2 border-t border-slate-200";
-            td.setAttribute('contenteditable', 'true');
-            tr.appendChild(td);
+            const canEdit = !editableCols || editableCols.includes(i);
+            if(canEdit){
+                td.setAttribute('contenteditable', 'true');
+            }
         }
         tr.appendChild(createActionsCell(tr));
-        tbody.appendChild(tr);
     };
     
     const getTableData = (tbody, headers) => {
         const data = [headers];
         tbody.querySelectorAll('tr').forEach(tr => {
             const rowData = [];
-            tr.querySelectorAll('td[contenteditable]').forEach(td => {
-                rowData.push(td.textContent.trim());
-            });
-            if (rowData.length > 0) {
-               data.push(rowData);
-            }
-        });
-        return data;
-    };
-    
-    const getClientTableDataForSave = () => {
-        const data = [clientDataHeaders];
-        clientsTableBody.querySelectorAll('tr').forEach(tr => {
-            const rowData = [];
-            tr.querySelectorAll('td').forEach(td => {
-                if(!td.querySelector('button')) {
+            tr.querySelectorAll('td').forEach((td, index) => {
+                if (index < headers.length) { 
                     rowData.push(td.textContent.trim());
                 }
             });
-            if(rowData.length > 0) data.push(rowData);
+            if (rowData.length > 0) data.push(rowData);
         });
         return data;
     };
-
 
     const saveChanges = async (type) => {
         const button = type === 'users' ? saveUsersBtn : saveClientsBtn;
         setButtonLoading(button, true);
         
-        let tableData;
-        if (type === 'users') {
-            tableData = getTableData(usersTableBody, ["usuario", "senha", "perfil"]);
-        } else {
-            tableData = getClientTableDataForSave();
-        }
+        const tableBody = type === 'users' ? usersTableBody : clientsTableBody;
+        const headers = type === 'users' ? ["usuario", "senha", "perfil"] : clientDataHeaders;
+        const tableData = getTableData(tableBody, headers);
 
         const payload = {
             action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
@@ -289,12 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             const result = await response.json();
-            if (result.result !== 'success') {
-                throw new Error(result.message || 'Erro desconhecido no servidor.');
-            }
+            if (result.result !== 'success') throw new Error(result.message);
             showToast('Alterações salvas com sucesso!');
         } catch (error) {
-            console.error(`Erro ao salvar ${type}:`, error);
             showToast(`Falha ao salvar. ${error.message}`, true);
         } finally {
             setButtonLoading(button, false);
@@ -305,12 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT LISTENERS ---
     loginForm.addEventListener('submit', handleLogin);
     logoutBtn.addEventListener('click', handleLogout);
-    addUserRowBtn.addEventListener('click', () => addRow(usersTableBody, 3));
-    addClientRowBtn.addEventListener('click', () => addRow(clientsTableBody, clientDataHeaders.length));
+    addUserRowBtn.addEventListener('click', () => addRow(usersTableBody, 3, null));
+    addClientRowBtn.addEventListener('click', () => addRow(clientsTableBody, clientDataHeaders.length, EDITABLE_CLIENT_COLUMNS));
     saveUsersBtn.addEventListener('click', () => saveChanges('users'));
-    saveClientsBtn.addEventListener('click', () => {
-        confirmationModal.classList.remove('hidden');
-    });
+    saveClientsBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
     cancelBtn.addEventListener('click', () => confirmationModal.classList.add('hidden'));
     confirmBtn.addEventListener('click', () => {
         confirmationModal.classList.add('hidden');

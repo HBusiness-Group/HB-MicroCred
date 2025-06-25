@@ -1,4 +1,3 @@
-// Aguarda o carregamento completo da página antes de executar o script
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELEÇÃO DE ELEMENTOS DO DOM ---
@@ -11,21 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginButton = loginForm.querySelector('button[type="submit"]');
     const userProfileName = document.getElementById('user-profile-name');
     const logoutBtn = document.getElementById('logout-btn');
-
-    // Seção de Usuários
     const usersSection = document.getElementById('users-section');
     const usersTableBody = document.getElementById('users-table-body');
     const addUserRowBtn = document.getElementById('add-user-row-btn');
     const saveUsersBtn = document.getElementById('save-users-btn');
-
-    // Seção de Clientes
     const clientsSection = document.getElementById('clients-section');
     const clientsTableHead = document.getElementById('clients-table-head');
     const clientsTableBody = document.getElementById('clients-table-body');
     const addClientRowBtn = document.getElementById('add-client-row-btn');
     const saveClientsBtn = document.getElementById('save-clients-btn');
-    
-    // Modal e Notificações
     const confirmationModal = document.getElementById('confirmation-modal');
     const cancelBtn = document.getElementById('cancel-btn');
     const confirmBtn = document.getElementById('confirm-btn');
@@ -34,9 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
-    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // Coluna F (address), Coluna J (statusEmprestimo)
+    const EDITABLE_CLIENT_COLUMNS = [5, 9]; 
 
-    // As senhas foram removidas do código! A verificação agora é segura.
     let currentUser = null;
     let clientDataHeaders = [];
     
@@ -46,19 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
         toastMessage.textContent = message;
         toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300';
         toast.classList.add(isError ? 'bg-red-600' : 'bg-slate-800', 'opacity-100');
-        setTimeout(() => toast.classList.remove('opacity-100'), 3000);
+        setTimeout(() => toast.classList.remove('opacity-100'), 4000);
     };
     
-    const setButtonLoading = (button, isLoading, originalText = '') => {
+    const setButtonLoading = (button, isLoading) => {
         const btnText = button.querySelector('.btn-text');
         const loader = button.querySelector('.loader-sm');
-        if (isLoading) {
-            if (btnText) btnText.classList.add('hidden');
-            if (loader) loader.classList.remove('hidden');
-        } else {
-            if (btnText) btnText.classList.remove('hidden');
-            if (loader) loader.classList.add('hidden');
-        }
+        if (btnText) btnText.classList.toggle('hidden', isLoading);
+        if (loader) loader.classList.toggle('hidden', !isLoading);
         button.disabled = isLoading;
     };
     
@@ -72,10 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify({ action: 'login', username: usernameInput.value, password: passwordInput.value }),
                 headers: { 'Content-Type': 'application/json' },
+                mode: 'cors'
             });
 
+            if (!response.ok) throw new Error(`Erro de rede: ${response.statusText}`);
             const result = await response.json();
-            if (result.result !== 'success') throw new Error(result.message);
+            if (result.result !== 'success') throw new Error(result.message || "Credenciais inválidas.");
 
             currentUser = { username: result.username, profile: result.profile };
             loginScreen.classList.add('hidden');
@@ -163,9 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 td.className = "px-4 py-2 border-t border-slate-200";
                 td.textContent = cellData;
                 const canEdit = isEditable && (!editableColumns || editableColumns.includes(cellIndex));
-                if (canEdit) {
-                    td.setAttribute('contenteditable', 'true');
-                }
+                if (canEdit) td.setAttribute('contenteditable', 'true');
             });
             tr.appendChild(createActionsCell(tr));
         });
@@ -192,9 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < colCount; i++) {
             const td = tr.insertCell();
             td.className = "px-4 py-2 border-t border-slate-200";
-            const canEdit = !editableCols || editableCols.includes(i);
-            if(canEdit){
-                td.setAttribute('contenteditable', 'true');
+            if (!editableCols || editableCols.includes(i)) {
+                 td.setAttribute('contenteditable', 'true');
             }
         }
         tr.appendChild(createActionsCell(tr));
@@ -236,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
             });
             
+            if (!response.ok) throw new Error(`Erro de rede: ${response.statusText}`);
             const result = await response.json();
             if (result.result !== 'success') throw new Error(result.message);
             showToast('Alterações salvas com sucesso!');

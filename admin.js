@@ -27,13 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
-    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // Coluna F (address), Coluna J (statusEmprestimo)
+    const EDITABLE_CLIENT_COLUMNS_FOR_EDITOR = [5, 8, 10]; 
 
     let currentUser = null;
     let clientDataHeaders = [];
     
     // --- FUNÇÕES ---
-
     const showToast = (message, isError = false) => {
         toastMessage.textContent = message;
         toast.className = 'fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transition-opacity duration-300';
@@ -55,12 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.classList.add('hidden');
 
         try {
+            const payload = { action: 'login', username: usernameInput.value, password: passwordInput.value };
             const response = await fetch(googleScriptURL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'login', username: usernameInput.value, password: passwordInput.value }),
-                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // MUDANÇA CRÍTICA AQUI
             });
             
+            if (!response.ok) throw new Error(`Erro de rede: ${response.statusText}`);
             const result = await response.json();
             if (result.result !== 'success') throw new Error(result.message);
 
@@ -106,24 +107,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (type === 'users') {
-                renderTable('users', data.slice(1), true, ["Usuário", "Senha", "Perfil"]);
+                renderTable('users', data.slice(1), ["Usuário", "Senha", "Perfil"]);
             } else {
                 clientDataHeaders = data[0] || [];
-                let clientRows = data.slice(1);
-                if(currentUser.profile === 'Editor') {
-                    const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
-                    if(refIndex > -1) {
-                         clientRows = clientRows.filter(row => row[refIndex] === currentUser.username);
-                    }
-                }
-                renderTable('clients', clientRows, true, clientDataHeaders.slice(1, 11), EDITABLE_CLIENT_COLUMNS);
+                renderTable('clients', data.slice(1), clientDataHeaders.slice(1, 11)); // Mostra colunas B a K
             }
         } catch (error) {
             showToast(`Falha ao carregar ${type}.`, true);
         }
     };
 
-    const renderTable = (type, data, isEditable, headers, editableColumns = null) => {
+    const renderTable = (type, data, headers) => {
         const tbody = type === 'users' ? usersTableBody : clientsTableBody;
         const thead = type === 'users' ? usersTableBody.previousElementSibling : clientsTableHead;
         tbody.innerHTML = '';
@@ -142,9 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
             headerRow.appendChild(thAction);
         }
         
-        data.forEach(rowData => {
+        let rowsToDisplay = data;
+        if (type === 'clients' && currentUser.profile === 'Editor') {
+            const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+            if (refIndex !== -1) {
+                rowsToDisplay = data.filter(row => row[refIndex] === currentUser.username);
+            }
+        }
+
+        rowsToDisplay.forEach(rowData => {
             const tr = tbody.insertRow();
             tr.className = "bg-white even:bg-slate-50";
+            tr.dataset.cpf = rowData[1]; // Salva o CPF da linha para referência
             
             const dataToRender = type === 'users' ? rowData : rowData.slice(1, 11);
 
@@ -154,24 +157,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 td.textContent = cellData;
                 
                 let isCellEditable = false;
-                if(type === 'users' && currentUser.profile === 'Administrador') {
+                if (type === 'users' && currentUser.profile === 'Administrador') {
                     isCellEditable = true;
                 } else if (type === 'clients') {
-                    if(currentUser.profile === 'Administrador') {
+                    const originalColumnIndex = cellIndex + 1; // Ajusta para o índice da planilha
+                    if (currentUser.profile === 'Administrador') {
                          isCellEditable = true;
-                    } else { // Editor
-                        // O índice original da coluna na planilha é cellIndex + 1 (pois pulamos a coluna A)
-                         if (editableColumns && editableColumns.includes(cellIndex + 1)) {
-                            isCellEditable = true;
-                         }
+                    } else if (currentUser.profile === 'Editor' && EDITABLE_CLIENT_COLUMNS_FOR_EDITOR.includes(originalColumnIndex)) {
+                        isCellEditable = true;
                     }
                 }
-
-                if (isCellEditable) {
-                    td.setAttribute('contenteditable', 'true');
-                }
+                if (isCellEditable) td.setAttribute('contenteditable', 'true');
             });
-            tr.appendChild(createActionsCell(tr, type));
+            tr.appendChild(createActionsCell(tr));
         });
     };
     
@@ -191,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tbody = isUserTable ? usersTableBody : clientsTableBody;
         const colCount = isUserTable ? 3 : 10;
         
-        const tr = tbody.insertRow(0); // Insere no topo
+        const tr = tbody.insertRow(0); 
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
             const td = tr.insertCell();
@@ -201,15 +199,25 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.appendChild(createActionsCell(tr));
     };
     
-    const getTableData = (tbody, headers) => {
-        const data = [headers];
+    const getTableData = (tbody, headers, fullHeaders) => {
+        const data = [fullHeaders || headers];
         tbody.querySelectorAll('tr').forEach(tr => {
             const rowData = [];
-            tr.querySelectorAll('td').forEach((td, index) => {
-                if (index < headers.length) { 
-                    rowData.push(td.textContent.trim());
-                }
-            });
+            // Para clientes, precisamos reconstruir a linha completa
+            if (headers === clientDataHeaders.slice(1, 11)) {
+                 rowData.push(''); // Coluna A vazia por padrão
+                 tr.querySelectorAll('td').forEach((td, index) => {
+                    if (index < headers.length) { 
+                        rowData.push(td.textContent.trim());
+                    }
+                });
+            } else { // Para usuários
+                 tr.querySelectorAll('td').forEach((td, index) => {
+                    if (index < headers.length) { 
+                        rowData.push(td.textContent.trim());
+                    }
+                });
+            }
             if (rowData.length > 0) data.push(rowData);
         });
         return data;
@@ -234,8 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(googleScriptURL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'application/json' },
+                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             });
+            
             const result = await response.json();
             if (result.result !== 'success') throw new Error(result.message);
             showToast('Alterações salvas com sucesso!');

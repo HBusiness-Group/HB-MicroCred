@@ -27,11 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DADOS E VARIÁVEIS DE ESTADO ---
     const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
-    const EDITABLE_CLIENT_COLUMNS = [5, 9]; 
+    const EDITABLE_CLIENT_COLUMNS = [5, 9]; // Coluna F (address), Coluna J (statusEmprestimo)
 
     let currentUser = null;
     let clientDataHeaders = [];
-    let fullClientData = [];
     
     // --- FUNÇÕES ---
 
@@ -110,23 +109,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderTable('users', data.slice(1), true, ["Usuário", "Senha", "Perfil"]);
             } else {
                 clientDataHeaders = data[0] || [];
-                fullClientData = data; // Armazena todos os dados
-                renderClientsView();
+                let clientRows = data.slice(1);
+                if(currentUser.profile === 'Editor') {
+                    const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
+                    if(refIndex > -1) {
+                         clientRows = clientRows.filter(row => row[refIndex] === currentUser.username);
+                    }
+                }
+                renderTable('clients', clientRows, true, clientDataHeaders.slice(1, 11), EDITABLE_CLIENT_COLUMNS);
             }
         } catch (error) {
             showToast(`Falha ao carregar ${type}.`, true);
         }
-    };
-    
-    const renderClientsView = () => {
-        let rowsToDisplay = fullClientData.slice(1);
-        if (currentUser.profile === 'Editor') {
-            const refIndex = clientDataHeaders.map(h => h.toLowerCase()).indexOf('referencename');
-            if (refIndex > -1) {
-                rowsToDisplay = rowsToDisplay.filter(row => row[refIndex] === currentUser.username);
-            }
-        }
-        renderTable('clients', rowsToDisplay, true, clientDataHeaders, EDITABLE_CLIENT_COLUMNS);
     };
 
     const renderTable = (type, data, isEditable, headers, editableColumns = null) => {
@@ -151,48 +145,60 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(rowData => {
             const tr = tbody.insertRow();
             tr.className = "bg-white even:bg-slate-50";
-            rowData.forEach((cellData, cellIndex) => {
+            
+            const dataToRender = type === 'users' ? rowData : rowData.slice(1, 11);
+
+            dataToRender.forEach((cellData, cellIndex) => {
                 const td = tr.insertCell();
                 td.className = "px-4 py-2 border-t border-slate-200";
                 td.textContent = cellData;
-                const canEdit = isEditable && (!editableColumns || editableColumns.includes(cellIndex));
-                if (canEdit) td.setAttribute('contenteditable', 'true');
+                
+                let isCellEditable = false;
+                if(type === 'users' && currentUser.profile === 'Administrador') {
+                    isCellEditable = true;
+                } else if (type === 'clients') {
+                    if(currentUser.profile === 'Administrador') {
+                         isCellEditable = true;
+                    } else { // Editor
+                        // O índice original da coluna na planilha é cellIndex + 1 (pois pulamos a coluna A)
+                         if (editableColumns && editableColumns.includes(cellIndex + 1)) {
+                            isCellEditable = true;
+                         }
+                    }
+                }
+
+                if (isCellEditable) {
+                    td.setAttribute('contenteditable', 'true');
+                }
             });
             tr.appendChild(createActionsCell(tr, type));
         });
     };
     
-    const createActionsCell = (row, type) => {
+    const createActionsCell = (row) => {
         const td = row.insertCell();
         td.className = "px-4 py-2 border-t border-slate-200";
-        if (currentUser.profile === 'Administrador' || (type === 'clients' && currentUser.profile === 'Editor')) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Excluir';
-            deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
-            deleteBtn.onclick = () => row.remove();
-            td.appendChild(deleteBtn);
-        }
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Excluir';
+        deleteBtn.className = 'text-red-500 hover:text-red-700 text-xs';
+        deleteBtn.onclick = () => row.remove();
+        td.appendChild(deleteBtn);
         return td;
     };
     
     const addRow = (type) => {
         const isUserTable = type === 'users';
         const tbody = isUserTable ? usersTableBody : clientsTableBody;
-        const colCount = isUserTable ? 3 : clientDataHeaders.length;
-        if (colCount === 0 && !isUserTable) {
-             showToast("Carregue os dados primeiro.", true);
-             return;
-        }
-
+        const colCount = isUserTable ? 3 : 10;
+        
         const tr = tbody.insertRow(0); // Insere no topo
         tr.className = "bg-white even:bg-slate-50";
         for (let i = 0; i < colCount; i++) {
             const td = tr.insertCell();
             td.className = "px-4 py-2 border-t border-slate-200";
-            const canEdit = isUserTable || EDITABLE_CLIENT_COLUMNS.includes(i);
-            if (canEdit) td.setAttribute('contenteditable', 'true');
+            td.setAttribute('contenteditable', 'true');
         }
-        tr.appendChild(createActionsCell(tr, type));
+        tr.appendChild(createActionsCell(tr));
     };
     
     const getTableData = (tbody, headers) => {
@@ -213,14 +219,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = type === 'users' ? saveUsersBtn : saveClientsBtn;
         setButtonLoading(button, true);
         
-        let payload;
-        if (type === 'users') {
-            const tableData = getTableData(usersTableBody, ["usuario", "senha", "perfil"]);
-            payload = { action: 'updateUsers', data: tableData, user: currentUser.username, profile: currentUser.profile };
-        } else {
-            const tableData = getTableData(clientsTableBody, clientDataHeaders);
-            payload = { action: 'updateClients', data: tableData, user: currentUser.username, profile: currentUser.profile };
-        }
+        const tableBody = type === 'users' ? usersTableBody : clientsTableBody;
+        const headers = type === 'users' ? ["usuario", "senha", "perfil"] : clientDataHeaders;
+        const tableData = getTableData(tableBody, headers);
+
+        const payload = {
+            action: `update${type.charAt(0).toUpperCase() + type.slice(1)}`,
+            user: currentUser.username,
+            profile: currentUser.profile,
+            data: tableData
+        };
         
         try {
             const response = await fetch(googleScriptURL, {
@@ -228,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload),
                 headers: { 'Content-Type': 'application/json' },
             });
-            
             const result = await response.json();
             if (result.result !== 'success') throw new Error(result.message);
             showToast('Alterações salvas com sucesso!');

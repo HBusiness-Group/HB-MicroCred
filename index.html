@@ -27,14 +27,71 @@
             100% { -webkit-transform: rotate(360deg); }
         }
         .input-error {
-            border-color: #ef4444; /* red-500 */
+            border-color: #ef4444;
+        }
+
+        /* Customização do slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e5e7eb; /* gray-200 */
+            border-radius: 5px;
+        }
+        input[type=range]::-moz-range-track {
+             width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #1d4ed8; /* blue-700 */
+            cursor: pointer;
+            margin-top: -8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: background-color 0.2s ease-in-out;
+        }
+        input[type=range]::-moz-range-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #1d4ed8;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: background-color 0.2s ease-in-out;
+        }
+        input[type=range].not-activated::-webkit-slider-thumb {
+            background: #4b5563; /* gray-600 */
+        }
+        input[type=range].not-activated::-moz-range-thumb {
+            background: #4b5563;
         }
     </style>
 </head>
 <body class="bg-slate-100">
     <!-- Container Principal do Formulário -->
-    <div id="form-container" class="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
+    <div id="form-container" class="relative w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 sm:p-8 md:p-10 my-4 sm:my-8">
         
+        <a href="admin.html" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" title="Acesso Restrito">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        </a>
+
         <header class="text-center mb-6">
             <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">HB MicroCred</h1>
             <p class="text-slate-500 mt-1 text-sm sm:text-base">Plataforma Digital para Requisição e Análise de Crédito</p>
@@ -74,6 +131,7 @@
                     </div>
                 </div>
 
+                <!-- Seção de Endereço via CEP -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Endereço</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
@@ -97,6 +155,7 @@
                     </div>
                 </div>
 
+                <!-- Seção Indicação -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Indicação</h2>
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -111,53 +170,29 @@
                     </div>
                 </div>
 
+                <!-- Seção de Escolha de Crédito com Slider -->
                 <div>
-                    <div class="flex items-center gap-x-3">
+                    <div class="flex items-center gap-x-3 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-800">Escolha seu Crédito</h2>
                     </div>
-                    <p class="text-xs text-red-600 mt-2">O valor do crédito solicitado está sujeito à avaliação do responsável pela sua indicação.</p>
-                    
-                    <div class="mt-4 bg-slate-50/70 p-5 rounded-xl border border-blue-100 space-y-4">
-                        <div>
-                            <input type="radio" name="requestedAmount" id="option500" value="500" class="hidden peer" required>
-                            <label for="option500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
-                                <div>
-                                    <strong class="block text-slate-800 text-base">Crédito de R$ 500,00</strong>
-                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 30,00</span>
-                                </div>
-                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
-                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                </div>
-                            </label>
+                    <p class="text-xs text-red-600 mb-4">O valor do crédito solicitado está sujeito à avaliação do responsável pela sua indicação.</p>
+                    <div class="bg-slate-50/70 p-6 rounded-xl border border-blue-100">
+                        <div class="text-center mb-6 h-16 flex flex-col justify-center">
+                            <span class="text-4xl font-bold text-slate-800" id="selected-amount-display"></span>
+                            <p class="text-slate-600 text-base mt-1" id="selected-terms-display"></p>
                         </div>
-                        <div>
-                            <input type="radio" name="requestedAmount" id="option1000" value="1000" class="hidden peer">
-                            <label for="option1000" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
-                                <div>
-                                    <strong class="block text-slate-800 text-base">Crédito de R$ 1.000,00</strong>
-                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 60,00</span>
-                                </div>
-                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
-                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                </div>
-                            </label>
+                        <div class="relative px-2">
+                            <input type="range" min="0" max="2" value="0" step="1" id="credit-slider" class="w-full h-2 rounded-lg appearance-none cursor-pointer not-activated">
                         </div>
-                         <div>
-                            <input type="radio" name="requestedAmount" id="option1500" value="1500" class="hidden peer">
-                            <label for="option1500" class="flex items-center justify-between p-4 border-2 border-slate-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:shadow-lg transition-all duration-200">
-                                <div>
-                                    <strong class="block text-slate-800 text-base">Crédito de R$ 1.500,00</strong>
-                                    <span class="text-slate-600 text-sm">22 parcelas de R$ 90,00</span>
-                                </div>
-                                <div class="w-6 h-6 border-2 border-blue-500 rounded-full flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
-                                     <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                </div>
-                            </label>
+                        <div class="flex justify-between text-sm font-medium text-slate-500 mt-2 px-2">
+                            <span>R$ 500</span>
+                            <span>R$ 1.000</span>
+                            <span>R$ 1.500</span>
                         </div>
-                        <div class="pt-4 border-t border-slate-200">
+                        <div class="pt-6 mt-6 border-t border-slate-200">
                            <p class="text-justify text-slate-700"><strong>Período de Pagamento:</strong> As parcelas são diárias, de segunda a sábado, com início no primeiro dia útil após a concessão do crédito. Domingos e feriados (nacionais, estaduais ou municipais) são considerados não úteis e, portanto, não entram na agenda de pagamentos. Nesses casos, a cobrança é automaticamente transferida para o próximo dia útil, dentro do intervalo de segunda a sábado.</p>
                             <p class="text-xs text-red-600 text-justify mt-3">O não pagamento poderá resultar no repasse dos valores pendentes ao responsável por sua indicação. Por isso, recomendamos o cumprimento do acordo firmado.</p>
                         </div>
@@ -244,7 +279,9 @@
         const loanForm = document.getElementById('loan-form');
         const requiredTextInputs = Array.from(loanForm.querySelectorAll('input[required]:not([type="radio"])'));
         const pixOptions = Array.from(loanForm.querySelectorAll('input[name="pixKeyOption"]'));
-        const creditOptions = Array.from(loanForm.querySelectorAll('input[name="requestedAmount"]'));
+        const creditSlider = document.getElementById('credit-slider');
+        const selectedAmountDisplay = document.getElementById('selected-amount-display');
+        const selectedTermsDisplay = document.getElementById('selected-terms-display');
         const openPopBtn = document.getElementById('open-pop-btn');
         const closePopBtn = document.getElementById('close-pop-btn');
         const clearFormBtn = document.getElementById('clear-form-btn');
@@ -269,11 +306,18 @@
         const complementoInput = document.getElementById('complemento');
         const addressResultDiv = document.getElementById('address-result');
         let addressDataFromCep = {};
+        let creditValueSelected = false; 
 
         const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwrRsGd1SFbicqT_HqXCvMPwfIIEYCRtTYMzEKRs_DTBYDD4hlnGPxyU264HtOCzOxE/exec';
+        
+        const creditOptionsMap = [
+            { value: '500', display: 'R$ 500,00', terms: '22 parcelas de R$ 30,00 cada' },
+            { value: '1000', display: 'R$ 1.000,00', terms: '22 parcelas de R$ 60,00 cada' },
+            { value: '1500', display: 'R$ 1.500,00', terms: '22 parcelas de R$ 90,00 cada' }
+        ];
 
         // Funções de Validação e Formatação
-        const checkFormCompletion = () => requiredTextInputs.every(input => input.value.trim() !== '') && pixOptions.some(radio => radio.checked) && creditOptions.some(radio => radio.checked);
+        const checkFormCompletion = () => requiredTextInputs.every(input => input.value.trim() !== '') && pixOptions.some(radio => radio.checked) && creditValueSelected;
         const updateAgreementButtonState = () => { openPopBtn.disabled = !checkFormCompletion(); };
         const showStatusMessage = (message, type) => {
             statusMessage.textContent = message;
@@ -292,14 +336,8 @@
             e.target.value = value.toUpperCase();
         };
 
-        const formatToUppercase = (e) => {
-            e.target.value = e.target.value.toUpperCase();
-        };
-
-        const formatNumericOnly = (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '');
-        };
-
+        const formatToUppercase = (e) => { e.target.value = e.target.value.toUpperCase(); };
+        const formatNumericOnly = (e) => { e.target.value = e.target.value.replace(/\D/g, ''); };
         const validateCPF = (cpf) => {
             cpf = cpf.replace(/[^\d]+/g, '');
             if (cpf === '' || cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
@@ -340,7 +378,6 @@
             value = value.replace(/(\d{5})(\d)/, '$1-$2');
             e.target.value = value;
         };
-        
         const resetErrors = () => {
              cpfInput.classList.remove('input-error');
              phoneInput.classList.remove('input-error');
@@ -348,7 +385,37 @@
              cpfError.classList.add('hidden');
         }
 
+        const updateCreditDisplay = (isInitial = false) => {
+            if (isInitial) {
+                selectedAmountDisplay.textContent = 'ARRASTE PARA ESCOLHER';
+                selectedTermsDisplay.textContent = 'Selecione um valor no controle';
+                return;
+            }
+            const selectedIndex = creditSlider.value;
+            const selectedOption = creditOptionsMap[selectedIndex];
+            selectedAmountDisplay.textContent = selectedOption.display;
+            selectedTermsDisplay.textContent = selectedOption.terms;
+            let hiddenInput = document.getElementById('hiddenRequestedAmount');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'hiddenRequestedAmount';
+                hiddenInput.name = 'requestedAmount'; 
+                loanForm.appendChild(hiddenInput);
+            }
+            hiddenInput.value = selectedOption.value;
+        };
+
         // Event Listeners
+        creditSlider.addEventListener('input', () => {
+            if (!creditValueSelected) {
+                creditValueSelected = true;
+                creditSlider.classList.remove('not-activated');
+            }
+            updateCreditDisplay();
+            updateAgreementButtonState(); 
+        });
+
         cepInput.addEventListener('blur', async (e) => {
             const cep = e.target.value.replace(/\D/g, '');
             if (cep.length !== 8) return;
@@ -383,8 +450,7 @@
         
         requiredTextInputs.forEach(input => input.addEventListener('input', updateAgreementButtonState));
         pixOptions.forEach(radio => radio.addEventListener('change', updateAgreementButtonState));
-        creditOptions.forEach(radio => radio.addEventListener('change', updateAgreementButtonState));
-
+        
         clearFormBtn.addEventListener('click', () => {
             loanForm.reset();
             addressDataFromCep = {};
@@ -392,6 +458,9 @@
             addressResultDiv.classList.add('hidden');
             addressResultDiv.textContent = '';
             resetErrors();
+            creditValueSelected = false;
+            creditSlider.classList.add('not-activated');
+            updateCreditDisplay(true);
             updateAgreementButtonState();
             statusMessage.classList.add('hidden');
         });
@@ -405,30 +474,30 @@
             e.preventDefault();
             resetErrors();
             
-            if (!validateCPF(cpfInput.value)) {
-                showStatusMessage('O CPF informado é inválido. Por favor, corrija.', 'error');
-                cpfInput.classList.add('input-error');
-                cpfError.classList.remove('hidden');
-                return;
+            const validations = [
+                { check: () => fullNameInput.value.trim() !== '', message: 'Por favor, preencha o seu Nome Completo.' },
+                { check: () => validateCPF(cpfInput.value), message: 'O CPF informado é inválido. Por favor, corrija.', el: cpfInput, errorEl: cpfError },
+                { check: () => phoneInput.value.replace(/\D/g, '').length === 11, message: 'O seu Telefone com WhatsApp deve ter 11 dígitos.', el: phoneInput },
+                { check: () => pixOptions.some(radio => radio.checked), message: 'Por favor, selecione uma opção para a Chave PIX.' },
+                { check: () => cepInput.value.trim() !== '', message: 'Por favor, preencha o CEP.' },
+                { check: () => numeroInput.value.trim() !== '', message: 'Por favor, preencha o Número do endereço.' },
+                { check: () => referenceNameInput.value.trim() !== '', message: 'Por favor, preencha o Código de Indicação.' },
+                { check: () => referencePhoneInput.value.replace(/\D/g, '').length === 11, message: 'O WhatsApp da Indicação deve ter 11 dígitos.', el: referencePhoneInput },
+                { check: () => creditValueSelected, message: 'Por favor, escolha uma opção de crédito usando o controle deslizante.' },
+                { check: () => document.getElementById('terms-acceptance').checked, message: 'Você deve ler e concordar com os termos para continuar.' }
+            ];
+
+            for (const validation of validations) {
+                if (!validation.check()) {
+                    showStatusMessage(validation.message, 'error');
+                    if (validation.el) {
+                        validation.el.classList.add('input-error');
+                        if(validation.errorEl) validation.errorEl.classList.remove('hidden');
+                    }
+                    return; 
+                }
             }
-            if (phoneInput.value.replace(/\D/g, '').length !== 11) {
-                showStatusMessage('O seu "Telefone com WhatsApp" deve ter 11 dígitos.', 'error');
-                phoneInput.classList.add('input-error');
-                return;
-            }
-             if (referencePhoneInput.value.replace(/\D/g, '').length !== 11) {
-                showStatusMessage('O "WhatsApp da Indicação" deve ter 11 dígitos.', 'error');
-                referencePhoneInput.classList.add('input-error');
-                return;
-            }
-            if (!checkFormCompletion()) {
-                 showStatusMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
-                 return;
-            }
-            if (!document.getElementById('terms-acceptance').checked) {
-                showStatusMessage('Você deve ler e concordar com os termos para continuar.', 'error');
-                return;
-            }
+            
             setLoading(true);
 
             const fullAddress = `${ruaInput.value}, ${numeroInput.value}${complementoInput.value ? ', ' + complementoInput.value.toUpperCase() : ''} - ${addressDataFromCep.bairro} - ${addressDataFromCep.localidade}/${addressDataFromCep.uf}, CEP: ${cepInput.value}`;
@@ -458,8 +527,9 @@
         });
 
         openPopBtn.addEventListener('click', () => {
-            const selectedOption = loanForm.querySelector('input[name="requestedAmount"]:checked');
-            if(selectedOption) {
+            const selectedIndex = creditSlider.value;
+            const selectedOption = creditOptionsMap[selectedIndex];
+            if(creditValueSelected && selectedOption) {
                 const optionDetails = {
                     "500": { amount: "R$ 500,00 (quinhentos reais)", terms: "22 (vinte e duas) parcelas diárias no valor de R$ 30,00 (trinta reais) cada" },
                     "1000": { amount: "R$ 1.000,00 (mil reais)", terms: "22 (vinte e duas) parcelas diárias no valor de R$ 60,00 (sessenta reais) cada" },
@@ -474,6 +544,12 @@
         closePopBtn.addEventListener('click', () => popModal.classList.add('hidden'));
         popModal.addEventListener('click', (e) => {
             if (e.target === popModal) popModal.classList.add('hidden');
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCreditDisplay(true); 
+            updateAgreementButtonState();
         });
     </script>
 </body>

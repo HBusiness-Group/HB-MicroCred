@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Análise HB</title>
+    <style>
+        :root {
+            --primary-color: #005f73;
+            --secondary-color: #0a9396;
+            --background-color: #e9d8a6;
+            --text-color: #001219;
+            --card-bg-color: #ffffff;
+            --danger-color: #ae2012;
+            --success-color: #2a9d8f;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 1300px;
+            background: var(--card-bg-color);
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease-in-out;
+        }
+        .hidden { display: none !important; }
+
+        h1, h2 { color: var(--primary-color); text-align: center; margin-bottom: 25px; }
+        h2 { text-align: left; border-bottom: 3px solid var(--secondary-color); padding-bottom: 10px; margin-top: 30px;}
+
+        input {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc;
+            border-radius: 8px; font-size: 16px; box-sizing: border-box;
+        }
+
+        button {
+            width: 100%; padding: 14px; border: none; border-radius: 8px;
+            background: var(--secondary-color); color: white; font-size: 18px;
+            font-weight: bold; cursor: pointer; transition: all 0.3s;
+        }
+        button:hover:not(:disabled) { background: var(--primary-color); transform: translateY(-2px); }
+        button:disabled { background: #999; cursor: not-allowed; }
+
+        .error { color: var(--danger-color); font-weight: bold; text-align: center; margin-top: 10px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        #user-info { font-size: 16px; color: var(--text-color); }
+        #logout-btn { width: auto; padding: 8px 15px; font-size: 14px; background-color: #777; }
+        
+        #control-panel { text-align: center; margin: 40px 0; }
+        #start-analysis-btn { width: auto; padding: 20px 40px; font-size: 22px; }
+
+        #editor-panel h3 { color: var(--text-color); }
+        #editor-panel h3 span { font-weight: normal; color: var(--secondary-color); }
+        
+        .table-container { overflow-x: auto; max-height: 60vh; border: 1px solid #ddd; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; white-space: nowrap; }
+        th { background-color: var(--primary-color); color: white; position: sticky; top: 0; z-index: 1; }
+        td[contenteditable="true"] { background-color: #feffdf; }
+        td[contenteditable="true"]:focus { background-color: white; outline: 2px solid var(--secondary-color); }
+        
+        footer { margin-top: 30px; text-align: center; }
+        #save-btn { background-color: var(--success-color); width: auto; padding: 15px 30px; }
+        #app-message { margin-top: 15px; font-weight: bold; font-size: 16px; }
+        .msg-success { color: var(--success-color); }
+        .msg-error { color: var(--danger-color); }
+        .msg-loading { color: var(--primary-color); }
+    </style>
+</head>
+<body>
+
+<div id="main-container" class="container">
+    
+    <!-- TELA DE LOGIN -->
+    <div id="login-container">
+        <h1>Sistema de Análise HB</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Digite seu nome ou identificação" required>
+            <button type="submit">Entrar</button>
+            <p id="login-error" class="error"></p>
+        </form>
+    </div>
+
+    <!-- PAINEL PRINCIPAL DO APP -->
+    <div id="app-container" class="hidden">
+        <header>
+            <h1>Painel de Análise</h1>
+            <div>
+                <span id="user-info"></span>
+                <button id="logout-btn">Sair</button>
+            </div>
+        </header>
+        
+        <main>
+            <div id="control-panel">
+                <button id="start-analysis-btn">Iniciar Nova Análise</button>
+            </div>
+
+            <div id="editor-panel" class="hidden">
+                <h3 id="current-sheet-info">Trabalhando na cópia: <span></span></h3>
+                <div class="table-container">
+                    <table id="sheet-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <footer>
+                    <button id="save-btn">Salvar Alterações na Cópia</button>
+                    <p id="app-message"></p>
+                </footer>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const ORCHESTRATOR_URL = 'https://script.google.com/macros/s/AKfycbxjVMdry0CFrhsIXHFaBYdQAnj9_AukBWUr8BEHm_XUDS3EF3PjZs3-uCA3wZdqHaWj/exec';
+
+    // --- Variáveis de estado do App ---
+    let currentUser = null;
+    let activeSheetId = null; // ID da CÓPIA em que estamos trabalhando
+
+    // --- Elementos da UI ---
+    const loginContainer = document.getElementById('login-container');
+    const appContainer = document.getElementById('app-container');
+    const loginForm = document.getElementById('login-form');
+    const usernameInput = document.getElementById('username');
+    const loginError = document.getElementById('login-error');
+    
+    const userInfoDisplay = document.getElementById('user-info');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    const controlPanel = document.getElementById('control-panel');
+    const startAnalysisBtn = document.getElementById('start-analysis-btn');
+    const editorPanel = document.getElementById('editor-panel');
+    const currentSheetInfo = document.querySelector('#current-sheet-info span');
+    
+    const sheetTableHead = document.querySelector('#sheet-table thead');
+    const sheetTableBody = document.querySelector('#sheet-table tbody');
+    const saveBtn = document.getElementById('save-btn');
+    const appMessage = document.getElementById('app-message');
+
+    // --- Lógica de Sessão ---
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (usernameInput.value.trim() === '') {
+            loginError.textContent = 'Por favor, insira um nome.';
+            return;
+        }
+        currentUser = { name: usernameInput.value.trim() };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        initializeApp();
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('currentUser');
+        location.reload();
+    });
+
+    // --- Funções Principais ---
+    function initializeApp() {
+        loginContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        userInfoDisplay.textContent = `Usuário: ${currentUser.name}`;
+    }
+
+    startAnalysisBtn.addEventListener('click', async () => {
+        setMessage('Criando sua cópia de trabalho... Isso pode levar um momento.', 'loading');
+        startAnalysisBtn.disabled = true;
+
+        try {
+            if (ORCHESTRATOR_URL.includes('COLE_A_URL')) {
+                throw new Error('A URL do Orquestrador ainda não foi configurada. Edite o arquivo HTML.');
+            }
+            const response = await fetch(ORCHESTRATOR_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Workaround for CORS
+                body: JSON.stringify({ action: 'createAndReadCopy', user: currentUser.name })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                activeSheetId = result.newSheetId;
+                currentSheetInfo.textContent = result.newSheetName;
+                const header = result.data.shift() || [];
+                renderSheetTable(header, result.data);
+                controlPanel.classList.add('hidden');
+                editorPanel.classList.remove('hidden');
+                setMessage('Cópia criada com sucesso. Você já pode editar os dados.', 'success');
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            setMessage(`Erro ao criar cópia: ${error.message}`, 'error');
+        } finally {
+            startAnalysisBtn.disabled = false;
+        }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        setMessage('Salvando alterações na sua cópia...', 'loading');
+        saveBtn.disabled = true;
+
+        try {
+            const dataToSave = parseTableData();
+            const response = await fetch(ORCHESTRATOR_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'updateSheet',
+                    sheetId: activeSheetId,
+                    data: dataToSave
+                })
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                setMessage('Alterações salvas com sucesso na sua cópia de trabalho!', 'success');
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            setMessage(`Erro ao salvar: ${error.message}`, 'error');
+        } finally {
+            saveBtn.disabled = false;
+        }
+    });
+    
+    // --- Funções Auxiliares ---
+    function renderSheetTable(header, data) {
+        sheetTableHead.innerHTML = '';
+        const trHead = document.createElement('tr');
+        header.forEach(cell => trHead.innerHTML += `<th>${cell}</th>`);
+        sheetTableHead.appendChild(trHead);
+
+        sheetTableBody.innerHTML = '';
+        data.forEach(rowData => {
+            const trBody = document.createElement('tr');
+            rowData.forEach(cellData => {
+                trBody.innerHTML += `<td contenteditable="true">${cellData}</td>`;
+            });
+            sheetTableBody.appendChild(trBody);
+        });
+    }
+
+    function parseTableData() {
+        const data = [];
+        sheetTableBody.querySelectorAll('tr').forEach(tr => {
+            const row = [];
+            tr.querySelectorAll('td').forEach(td => {
+                row.push(td.textContent);
+            });
+            data.push(row);
+        });
+        return data;
+    }
+
+    function setMessage(text, type) {
+        appMessage.textContent = text;
+        appMessage.className = `msg-${type}`;
+    }
+
+    // --- Inicialização da Sessão ---
+    const savedUser = sessionStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        initializeApp();
+    }
+});
+</script>
+</body>
+</html>

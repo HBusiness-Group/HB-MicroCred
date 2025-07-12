@@ -98,16 +98,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div class="md:col-span-2">
                             <label for="fullName" class="block text-sm font-medium text-slate-600 mb-1">Nome Completo</label>
-                            <input type="text" id="fullName" name="fullName" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition uppercase" required>
+                            <input type="text" id="fullName" name="fullName" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition uppercase" required>
                         </div>
                         <div>
                             <label for="cpf" class="block text-sm font-medium text-slate-600 mb-1">CPF</label>
-                            <input type="text" id="cpf" name="cpf" maxlength="14" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition cpf-placeholder" placeholder="000.000.000-00" required>
+                            <input type="text" id="cpf" name="cpf" maxlength="14" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" placeholder="000.000.000-00" required>
                             <p id="cpf-error" class="text-xs text-red-600 mt-1 hidden">CPF inválido.</p>
                         </div>
                         <div>
                             <label for="phone" class="block text-sm font-medium text-slate-600 mb-1">Telefone com WhatsApp</label>
-                            <input type="tel" id="phone" name="phone" maxlength="15" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition" placeholder="(00) 00000-0000" required>
+                            <input type="tel" id="phone" name="phone" maxlength="15" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" placeholder="(00) 00000-0000" required>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-slate-600 mb-1">Chave PIX</label>
@@ -122,16 +122,58 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="md:col-span-2">
+                             <label for="financialInstitution" class="block text-sm font-medium text-slate-600 mb-1">Instituição Financeira</label>
+                             <select id="financialInstitution" name="financialInstitution" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" required>
+                                <option value="" disabled selected>Selecione seu banco...</option>
+                                <option value="BANCO DO BRASIL S.A.">BANCO DO BRASIL S.A.</option>
+                                <option value="CAIXA ECONOMICA FEDERAL">CAIXA ECONOMICA FEDERAL</option>
+                                <option value="BANCO BRADESCO S.A.">BANCO BRADESCO S.A.</option>
+                                <option value="ITAÚ UNIBANCO S.A.">ITAÚ UNIBANCO S.A.</option>
+                                <option value="BANCO SANTANDER (BRASIL) S.A.">BANCO SANTANDER (BRASIL) S.A.</option>
+                                <option value="NU PAGAMENTOS S.A. - NUBANK">NU PAGAMENTOS S.A. - NUBANK</option>
+                                <option value="BANCO INTER S.A.">BANCO INTER S.A.</option>
+                                <option value="BANCO C6 S.A.">BANCO C6 S.A.</option>
+                                <option value="PAGSEGURO INTERNET INSTITUIÇÃO DE PAGAMENTO S.A.">PAGSEGURO</option>
+                                <option value="PICPAY INSTITUIÇÃO DE PAGAMENTO S.A.">PICPAY</option>
+                                <option value="MERCADO PAGO - INSTITUIÇÃO DE PAGAMENTO LTDA.">MERCADO PAGO</option>
+                                <option value="BANCO SAFRA S.A.">BANCO SAFRA S.A.</option>
+                                <option value="BANCO BTG PACTUAL S.A.">BANCO BTG PACTUAL S.A.</option>
+                                <option value="BANCO PAN S.A.">BANCO PAN S.A.</option>
+                                <option value="BANCO ORIGINAL S.A.">BANCO ORIGINAL S.A.</option>
+                                <option value="BANCO VOTORANTIM S.A. (BANCO BV)">BANCO VOTORANTIM S.A. (BANCO BV)</option>
+                                <option value="BANCO DAYCOVAL S.A.">BANCO DAYCOVAL S.A.</option>
+                                <option value="BANCO NEON S.A.">BANCO NEON S.A.</option>
+                                <option value="BANCO DIGIO S.A.">BANCO DIGIO S.A.</option>
+                                <option value="XP INVESTIMENTOS CCTVM S.A.">XP INVESTIMENTOS CCTVM S.A.</option>
+                                <option value="BANCO MODAL S.A.">BANCO MODAL S.A.</option>
+                                <option value="BANCO ABC BRASIL S.A.">BANCO ABC BRASIL S.A.</option>
+                                <option value="BANCO SOFISA S.A.">BANCO SOFISA S.A.</option>
+                                <option value="PARANA BANCO S.A.">PARANA BANCO S.A.</option>
+                                <option value="BANCO BMG S.A.">BANCO BMG S.A.</option>
+                                <option value="BANCOOB (SICOOB)">BANCOOB (SICOOB)</option>
+                                <option value="SICREDI">SICREDI</option>
+                                <option value="BANESTES S.A. BANCO DO ESTADO DO ESPIRITO SANTO">BANESTES S.A. BANCO DO ESTADO DO ESPIRITO SANTO</option>
+                                <option value="BANCO DO ESTADO DO RIO GRANDE DO SUL S.A. (BANRISUL)">BANCO DO ESTADO DO RIO GRANDE DO SUL S.A. (BANRISUL)</option>
+                                <option value="BANCO DO NORDESTE DO BRASIL S.A.">BANCO DO NORDESTE DO BRASIL S.A.</option>
+                                <option value="BANCO DA AMAZONIA S.A.">BANCO DA AMAZONIA S.A.</option>
+                                <option value="BANCO CETELEM S.A.">BANCO CETELEM S.A.</option>
+                                <option value="BANCO CSF S.A. (CARREFOUR)">BANCO CSF S.A. (CARREFOUR)</option>
+                                <option value="BANCO RCI BRASIL S.A.">BANCO RCI BRASIL S.A.</option>
+                                <option value="BANCO RENDIMENTO S.A.">BANCO RENDIMENTO S.A.</option>
+                                <option value="STONE PAGAMENTOS S.A.">STONE PAGAMENTOS S.A.</option>
+                                <option value="Outra">Outra</option>
+                             </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Seção de Endereço via CEP -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Endereço</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                         <div class="md:col-span-1">
                             <label for="cep" class="block text-sm font-medium text-slate-600 mb-1">CEP</label>
-                            <input type="text" id="cep" name="cep" maxlength="9" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition" placeholder="00000-000" required>
+                            <input type="text" id="cep" name="cep" maxlength="9" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" placeholder="00000-000" required>
                         </div>
                         <div id="address-result" class="md:col-span-3 text-sm text-slate-500 bg-slate-50 p-3 rounded-md hidden"></div>
                         <div class="md:col-span-2">
@@ -140,31 +182,29 @@
                         </div>
                         <div class="md:col-span-1">
                             <label for="numero" class="block text-sm font-medium text-slate-600 mb-1">Número</label>
-                            <input type="text" id="numero" name="numero" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition" required>
+                            <input type="text" id="numero" name="numero" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" required>
                         </div>
                         <div class="md:col-span-3">
-                             <label for="complemento" class="block text-sm font-medium text-slate-600 mb-1">Complemento (apartamento, bloco, etc)</label>
-                            <input type="text" id="complemento" name="complemento" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition uppercase">
+                             <label for="complemento" class="block text-sm font-medium text-slate-600 mb-1">Complemento / Referência</label>
+                            <input type="text" id="complemento" name="complemento" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition uppercase">
                         </div>
                     </div>
                 </div>
 
-                <!-- Seção Indicação -->
                 <div>
                     <h2 class="text-lg sm:text-xl font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Indicação</h2>
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
                             <label for="referenceName" class="block text-sm font-medium text-slate-600 mb-1">Código de Indicação</label>
-                            <input type="tel" id="referenceName" name="referenceName" maxlength="4" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition" placeholder="0000" required>
+                            <input type="tel" id="referenceName" name="referenceName" maxlength="4" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" placeholder="0000" required>
                         </div>
                         <div>
                             <label for="referencePhone" class="block text-sm font-medium text-slate-600 mb-1">WhatsApp da Indicação</label>
-                            <input type="tel" id="referencePhone" name="referencePhone" maxlength="15" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition" placeholder="(00) 00000-0000" required>
+                            <input type="tel" id="referencePhone" name="referencePhone" maxlength="15" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-800 transition" placeholder="(00) 00000-0000" required>
                         </div>
                     </div>
                 </div>
 
-                <!-- Seção de Escolha de Crédito com Slider -->
                 <div>
                     <div class="flex items-center gap-x-3 mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -266,6 +306,23 @@
         </div>
     </div>
     
+    <!-- Modal de Confirmação de PIX -->
+    <div id="pix-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full">
+            <h3 class="text-lg font-bold text-slate-800 text-center">Confirme sua Chave PIX</h3>
+            <p class="text-slate-600 my-4 text-center">A chave PIX selecionada para o crédito é:</p>
+            <p id="pix-to-confirm" class="text-center font-bold text-blue-800 text-xl bg-slate-100 p-3 rounded-md"></p>
+            <p class="text-xs text-slate-500 mt-4 text-center">Verifique se está correta antes de continuar.</p>
+            <div class="flex justify-center gap-4 mt-6">
+                <button id="cancel-pix-btn" class="bg-gray-200 text-slate-800 font-bold py-2 px-4 rounded-lg">Corrigir</button>
+                <button id="confirm-pix-btn" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center">
+                    <span class="btn-text">Está Correta, Enviar</span>
+                    <div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-4 w-4 ml-2 hidden"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Selecionando Elementos
         const formContainer = document.getElementById('form-container');
@@ -299,6 +356,10 @@
         const numeroInput = document.getElementById('numero');
         const complementoInput = document.getElementById('complemento');
         const addressResultDiv = document.getElementById('address-result');
+        const pixConfirmationModal = document.getElementById('pix-confirmation-modal');
+        const pixToConfirm = document.getElementById('pix-to-confirm');
+        const cancelPixBtn = document.getElementById('cancel-pix-btn');
+        const confirmPixBtn = document.getElementById('confirm-pix-btn');
         let addressDataFromCep = {};
         let creditValueSelected = false; 
 
@@ -320,10 +381,12 @@
             statusMessage.classList.remove('hidden');
             setTimeout(() => { statusMessage.classList.add('hidden'); }, 6000);
         };
-        const setLoading = (isLoading) => {
-            buttonText.classList.toggle('hidden', isLoading);
+        const setLoading = (button, isLoading) => {
+            const btnText = button.querySelector('.btn-text');
+            const loader = button.querySelector('.loader');
+            btnText.classList.toggle('hidden', isLoading);
             loader.classList.toggle('hidden', !isLoading);
-            submitButton.disabled = isLoading;
+            button.disabled = isLoading;
         };
         const formatNameInput = (e) => {
             let value = e.target.value.replace(/[0-9]/g, '');
@@ -400,6 +463,45 @@
             hiddenInput.value = selectedOption.value;
         };
 
+        const showPixConfirmation = () => {
+            const pixOption = loanForm.querySelector('input[name="pixKeyOption"]:checked');
+            let pixValue = '';
+            if (pixOption.value === 'cpf') pixValue = cpfInput.value;
+            else if (pixOption.value === 'phone') pixValue = phoneInput.value;
+            pixToConfirm.textContent = pixValue;
+            pixConfirmationModal.classList.remove('hidden');
+        };
+
+        const submitFinalForm = () => {
+            setLoading(confirmPixBtn, true);
+            const fullAddress = `${ruaInput.value}, ${numeroInput.value}${complementoInput.value ? ', ' + complementoInput.value.toUpperCase() : ''} - ${addressDataFromCep.bairro} - ${addressDataFromCep.localidade}/${addressDataFromCep.uf}, CEP: ${cepInput.value}`;
+            const formData = new FormData(loanForm);
+            formData.append('address', fullAddress);
+            const pixOption = formData.get('pixKeyOption');
+            formData.append('pixKey', pixOption === 'cpf' ? formData.get('cpf') : formData.get('phone'));
+            formData.delete('pixKeyOption');
+            formData.delete('rua');
+
+            fetch(googleScriptURL, { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        pixConfirmationModal.classList.add('hidden');
+                        clearFormBtn.click();
+                        formContainer.classList.add('hidden');
+                        successScreen.classList.remove('hidden');
+                    } else {
+                        throw new Error(data.message || 'Ocorreu um erro desconhecido.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    pixConfirmationModal.classList.add('hidden');
+                    showStatusMessage(`Erro ao enviar cadastro: ${error.message}`, 'error');
+                })
+                .finally(() => setLoading(confirmPixBtn, false));
+        };
+
         // Event Listeners
         creditSlider.addEventListener('input', () => {
             if (!creditValueSelected) {
@@ -473,6 +575,7 @@
                 { check: () => validateCPF(cpfInput.value), message: 'O CPF informado é inválido. Por favor, corrija.', el: cpfInput, errorEl: cpfError },
                 { check: () => phoneInput.value.replace(/\D/g, '').length === 11, message: 'O seu Telefone com WhatsApp deve ter 11 dígitos.', el: phoneInput },
                 { check: () => pixOptions.some(radio => radio.checked), message: 'Por favor, selecione uma opção para a Chave PIX.' },
+                { check: () => document.getElementById('financialInstitution').value !== '', message: 'Por favor, selecione sua Instituição Financeira.'},
                 { check: () => cepInput.value.trim() !== '', message: 'Por favor, preencha o CEP.' },
                 { check: () => numeroInput.value.trim() !== '', message: 'Por favor, preencha o Número do endereço.' },
                 { check: () => referenceNameInput.value.trim() !== '', message: 'Por favor, preencha o Código de Indicação.' },
@@ -492,32 +595,7 @@
                 }
             }
             
-            setLoading(true);
-
-            const fullAddress = `${ruaInput.value}, ${numeroInput.value}${complementoInput.value ? ', ' + complementoInput.value.toUpperCase() : ''} - ${addressDataFromCep.bairro} - ${addressDataFromCep.localidade}/${addressDataFromCep.uf}, CEP: ${cepInput.value}`;
-            const formData = new FormData(loanForm);
-            formData.append('address', fullAddress);
-            const pixOption = formData.get('pixKeyOption');
-            formData.append('pixKey', pixOption === 'cpf' ? formData.get('cpf') : formData.get('phone'));
-            formData.delete('pixKeyOption');
-            formData.delete('rua');
-
-            fetch(googleScriptURL, { method: 'POST', body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.result === 'success') {
-                        clearFormBtn.click();
-                        formContainer.classList.add('hidden');
-                        successScreen.classList.remove('hidden');
-                    } else {
-                        throw new Error(data.message || 'Ocorreu um erro desconhecido.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showStatusMessage(`Erro ao enviar cadastro: ${error.message}`, 'error');
-                })
-                .finally(() => setLoading(false));
+            showPixConfirmation();
         });
 
         openPopBtn.addEventListener('click', () => {
@@ -535,6 +613,9 @@
             debtorInfo.innerHTML = `<strong>Devedor:</strong> ${fullNameInput.value.trim()}, inscrito no CPF sob o nº ${cpfInput.value.trim()}`;
             popModal.classList.remove('hidden');
         });
+        
+        cancelPixBtn.addEventListener('click', () => pixConfirmationModal.classList.add('hidden'));
+        confirmPixBtn.addEventListener('click', submitFinalForm);
         closePopBtn.addEventListener('click', () => popModal.classList.add('hidden'));
         popModal.addEventListener('click', (e) => {
             if (e.target === popModal) popModal.classList.add('hidden');
